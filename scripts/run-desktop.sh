@@ -9,10 +9,8 @@ if [[ ! -d node_modules ]]; then
   npm install
 fi
 
-if [[ ! -f dist/index.html ]]; then
-  echo "Building web app into dist/…"
-  npm run build
-fi
+echo "Building web app into dist/…"
+npm run build
 
 echo "Starting Leap reader (desktop)…"
 exec npm run desktop:start
