@@ -1173,6 +1173,9 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   font-size: 0.9rem;
   line-height: 1.45;
   color: var(--text);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .about-lead {
