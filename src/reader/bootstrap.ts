@@ -111,20 +111,12 @@ export function bootstrapReader(): void {
 
   document.getElementById("btn-about")?.addEventListener("click", () => {
     setAppMenuOpen(false);
-    // Reset confirm state each time the dialog opens.
-    document.getElementById("reset-prefs-idle")?.removeAttribute("hidden");
-    document.getElementById("reset-prefs-confirm")?.setAttribute("hidden", "");
     (document.getElementById("dialog-about") as HTMLDialogElement | null)?.showModal();
   });
 
   document.getElementById("btn-reset-prefs")?.addEventListener("click", () => {
-    document.getElementById("reset-prefs-idle")?.setAttribute("hidden", "");
-    document.getElementById("reset-prefs-confirm")?.removeAttribute("hidden");
-  });
-
-  document.getElementById("btn-reset-prefs-cancel")?.addEventListener("click", () => {
-    document.getElementById("reset-prefs-idle")?.removeAttribute("hidden");
-    document.getElementById("reset-prefs-confirm")?.setAttribute("hidden", "");
+    setAppMenuOpen(false);
+    (document.getElementById("dialog-reset-prefs") as HTMLDialogElement | null)?.showModal();
   });
 
   document.getElementById("btn-reset-prefs-yes")?.addEventListener("click", () => {

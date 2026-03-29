@@ -1121,13 +1121,8 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   background: var(--surface);
 }
 
-.reset-confirm-prompt {
-  margin-bottom: 0.5rem;
-}
-
-.reset-confirm-row {
-  display: flex;
-  gap: 0.5rem;
+.flyout-item-danger {
+  color: #c5221f;
 }
 
 .text-input {

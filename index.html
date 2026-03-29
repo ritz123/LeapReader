@@ -80,6 +80,7 @@
       </button>
       <button type="button" class="flyout-item" id="btn-help" role="menuitem" title="How to use Leap reader">Help</button>
       <button type="button" class="flyout-item" id="btn-about" role="menuitem">About</button>
+      <button type="button" class="flyout-item flyout-item-danger" id="btn-reset-prefs" role="menuitem">Reset preferences…</button>
       <div class="flyout-section">
         <span class="flyout-label">Panes</span>
         <div class="flyout-seg-row" role="group" aria-label="Number of panes">
@@ -465,20 +466,6 @@
               </a>
             </p>
           </section>
-          <section class="about-section">
-            <h3 class="about-section-title">Reset preferences</h3>
-            <p class="help-muted">Clears layout and display preferences (pane mode, zoom, highlight colour) and reloads the app. Your libraries, documents, highlights, and notes are not affected.</p>
-            <div id="reset-prefs-idle">
-              <button type="button" class="btn danger" id="btn-reset-prefs">Reset preferences…</button>
-            </div>
-            <div id="reset-prefs-confirm" hidden>
-              <p class="help-muted reset-confirm-prompt">This will clear your preferences and reload. Continue?</p>
-              <div class="reset-confirm-row">
-                <button type="button" class="btn danger" id="btn-reset-prefs-yes">Yes, reset</button>
-                <button type="button" class="btn" id="btn-reset-prefs-cancel">Cancel</button>
-              </div>
-            </div>
-          </section>
           <p class="help-muted help-copyright about-copyright">Copyright © 2026 Biplab Sarkar. All rights reserved.</p>
         </div>
         <form method="dialog" class="dialog-foot">
@@ -649,6 +636,21 @@
         tabindex="-1"
       ></iframe>
     </div>
+
+    <dialog id="dialog-reset-prefs" class="app-dialog app-dialog-small" aria-labelledby="dialog-reset-prefs-title">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title" id="dialog-reset-prefs-title">Reset preferences</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-reset-prefs" aria-label="Close">×</button>
+        </div>
+        <p class="help-muted">Clears layout and display preferences (pane mode, zoom, highlight colour) and reloads the app.</p>
+        <p class="help-muted">Your libraries, documents, highlights, and notes are <strong>not</strong> affected.</p>
+        <form method="dialog" class="dialog-foot row">
+          <button type="submit" class="btn">Cancel</button>
+          <button type="button" class="btn danger" id="btn-reset-prefs-yes">Yes, reset</button>
+        </form>
+      </div>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
