@@ -22,6 +22,8 @@
     "build:dist:appimage": "bash scripts/build-dist.sh AppImage",
     "build:dist:deb": "bash scripts/build-dist.sh deb",
     "pack:linux": "bash scripts/build-dist.sh",
+    "build:android": "bash scripts/build-android.sh",
+    "build:android:release": "bash scripts/build-android.sh release",
     "cap:sync": "cap sync",
     "cap:open": "cap open android"
   },
