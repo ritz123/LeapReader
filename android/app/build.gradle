@@ -7,8 +7,8 @@ android {
         applicationId "com.leapreader.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv("VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("VERSION_NAME") ?: "1.0"
+        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
+        versionName (System.getenv("VERSION_NAME") ?: "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -17,18 +17,26 @@ android {
         }
     }
 
+    def keystorePath     = System.getenv("ANDROID_KEYSTORE_PATH")
+    def keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+    def keyAlias         = System.getenv("ANDROID_KEY_ALIAS")
+    def keyPassword      = System.getenv("ANDROID_KEY_PASSWORD")
+    def canSign          = keystorePath && keystorePassword && keyAlias && keyPassword
+
     signingConfigs {
         release {
-            storeFile file(System.getenv("ANDROID_KEYSTORE_PATH"))
-            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("ANDROID_KEY_ALIAS")
-            keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            if (canSign) {
+                storeFile     file(keystorePath)
+                storePassword keystorePassword
+                keyAlias      keyAlias
+                keyPassword   keyPassword
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig canSign ? signingConfigs.release : null
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
