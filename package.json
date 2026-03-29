@@ -1,7 +1,7 @@
 {
   "name": "leap-reader",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.4",
   "type": "module",
   "main": "electron/main.mjs",
   "author": "Leap reader",
@@ -54,11 +54,16 @@
       {
         "from": "build/icons",
         "to": "icons",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Office",
       "synopsis": "Split-pane PDF reader with highlights and libraries",
       "maintainer": "Leap reader <noreply@localhost>",
