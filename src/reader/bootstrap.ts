@@ -76,6 +76,12 @@ export function bootstrapReader(): void {
   wireFileInput("file-input-left", "left");
   wireFileInput("file-input-right", "right");
 
+  const versionLabel = `Version ${__APP_VERSION__}`;
+  const splashVersion = document.getElementById("splash-version");
+  const aboutVersion = document.getElementById("about-version");
+  if (splashVersion) splashVersion.textContent = versionLabel;
+  if (aboutVersion) aboutVersion.textContent = versionLabel;
+
   const appMenuBtn = document.getElementById("btn-app-menu") as HTMLButtonElement | null;
   const appMenuPanel = document.getElementById("app-menu-panel") as HTMLDivElement | null;
   const appMenuBackdrop = document.getElementById("app-menu-backdrop") as HTMLDivElement | null;
