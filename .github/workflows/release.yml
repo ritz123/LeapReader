@@ -61,6 +61,11 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install FUSE library for AppImage testing
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+
       - name: Download installers
         uses: actions/download-artifact@v4
         with:
