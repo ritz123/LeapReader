@@ -9,8 +9,9 @@ permissions:
   contents: write
 
 jobs:
+  # ── 1. Build ────────────────────────────────────────────────────────────────
   build-linux:
-    name: Build & publish Linux release
+    name: Build Linux installers
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +32,56 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish GitHub Release
+      - name: Upload installers as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
+          path: |
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
+
+  # ── 2. Test ─────────────────────────────────────────────────────────────────
+  test-linux:
+    name: Validate AppImage
+    needs: build-linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-installers
+          path: release/
+
+      - name: Make AppImage executable
+        run: chmod +x release/*.AppImage
+
+      - name: Run AppImage tests
+        run: bash scripts/test-appimage.sh "" "${{ github.ref_name }}"
+
+  # ── 3. Publish (only if tests pass) ─────────────────────────────────────────
+  publish:
+    name: Publish GitHub Release
+    needs: test-linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-installers
+          path: release/
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: Leap Reader ${{ github.ref_name }}
