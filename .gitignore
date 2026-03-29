@@ -3,3 +3,5 @@ dist/
 release/
 .DS_Store
 *.local
+ANDROID_KEYSTORE_BASE64.txt
+*.swp
