@@ -26,11 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build web assets
-        run: npm run build
-
-      - name: Package Linux installers
-        run: npx electron-builder --linux
+      - name: Build & package Linux installers
+        run: bash scripts/build-dist.sh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
