@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="color-scheme" content="light" />
+    <meta
+      name="description"
+      content="Split-pane PDF reader: leap to another page or document for quick reference like a paper book, while keeping focus on what you read. Libraries, highlights, and notes."
+    />
+    <title>Leap reader</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div
+      id="app-splash"
+      class="app-splash"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="Leap reader is starting"
+    >
+      <div class="app-splash__card">
+        <p class="app-splash__eyebrow">PDF reader</p>
+        <h1 class="app-splash__title">Leap reader</h1>
+        <p class="app-splash__tagline">
+          Read in one pane and <strong>leap</strong> to another page or document for quick reference—like a paper
+          book—without losing your place. Built for technical PDFs.
+        </p>
+        <ul class="app-splash__features">
+          <li>Split left / right panes</li>
+          <li>Libraries &amp; recent files</li>
+          <li>Highlights &amp; notes</li>
+          <li>Web, desktop (Electron), Android (Capacitor)</li>
+        </ul>
+        <p class="app-splash__version">Version 1.0.0</p>
+        <p class="app-splash__loading"><span class="app-splash__dot" aria-hidden="true"></span> Preparing…</p>
+        <noscript>
+          <p class="app-splash__noscript">JavaScript is required to run Leap reader.</p>
+        </noscript>
+      </div>
+    </div>
+
+    <header class="toolbar toolbar--compact">
+      <button
+        type="button"
+        class="icon-btn toolbar-menu-btn"
+        id="btn-app-menu"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-controls="app-menu-panel"
+        title="Menu"
+      >
+        ☰
+      </button>
+      <div class="toolbar-title-block">
+        <span id="doc-title" class="doc-title">No document</span>
+        <span id="page-count" class="meta"></span>
+      </div>
+      <span class="toolbar-end-spacer" aria-hidden="true"></span>
+    </header>
+
+    <div id="app-menu-backdrop" class="app-flyout-backdrop" hidden aria-hidden="true"></div>
+    <div id="app-menu-panel" class="app-flyout app-menu-flyout" role="menu" hidden aria-label="App menu">
+      <div class="flyout-section flyout-open-pdf">
+        <span class="flyout-label">Open file</span>
+        <label class="flyout-open-label btn primary" for="file-input-left">Open PDF — Left pane</label>
+        <label class="flyout-open-label btn primary" for="file-input-right">Open PDF — Right pane</label>
+      </div>
+      <button type="button" class="flyout-item" id="btn-recent" role="menuitem">Recent</button>
+      <button type="button" class="flyout-item" id="btn-libraries" role="menuitem" aria-expanded="false" aria-controls="libraries-panel">
+        Libraries
+      </button>
+      <button type="button" class="flyout-item" id="btn-export-annotations" role="menuitem">
+        Export highlights &amp; notes…
+      </button>
+      <button type="button" class="flyout-item" id="btn-help" role="menuitem" title="How to use Leap reader">Help</button>
+      <button type="button" class="flyout-item" id="btn-about" role="menuitem">About</button>
+      <div class="flyout-section">
+        <span class="flyout-label">Panes</span>
+        <div class="flyout-seg-row" role="group" aria-label="Number of panes">
+          <button type="button" class="btn-seg" data-pane-mode="split" aria-pressed="true">Split</button>
+          <button type="button" class="btn-seg" data-pane-mode="single" aria-pressed="false">Single</button>
+        </div>
+      </div>
+      <div class="flyout-section flyout-narrow-two-pane">
+        <span class="flyout-label">View (narrow, two panes)</span>
+        <div class="layout-controls flyout-seg-row" role="group" aria-label="View layout">
+          <button type="button" class="btn-seg" data-layout="split" aria-pressed="true">Split</button>
+          <button type="button" class="btn-seg" data-layout="tabs" aria-pressed="false">Tabs</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane-tab-float" id="pane-tab-float" aria-label="Active pane">
+      <div class="pane-tabs" id="pane-tabs" role="tablist">
+        <button type="button" class="btn-tab" role="tab" data-pane-tab="left" aria-selected="true" id="tab-left">Left</button>
+        <button type="button" class="btn-tab" role="tab" data-pane-tab="right" aria-selected="false" id="tab-right">Right</button>
+      </div>
+    </div>
+
+    <main class="split" id="split" data-active-tab="left">
+      <section class="pane" data-side="left">
+        <div class="canvas-wrap">
+          <div class="canvas-scroll">
+            <div class="single-page-shell">
+              <div class="page-viewport">
+                <canvas class="pdf-canvas"></canvas>
+                <div class="annotation-highlights" aria-hidden="true"></div>
+                <div class="text-layer"></div>
+                <div class="annotation-notes"></div>
+              </div>
+            </div>
+            <div class="continuous-stack" hidden></div>
+          </div>
+          <div class="placeholder">
+            <p class="placeholder-hint">Choose a PDF for this pane:</p>
+            <label class="btn primary placeholder-open" for="file-input-left">Open PDF</label>
+            <p class="placeholder-sub">
+              Or tap <strong>⋯</strong> (bottom-right) for zoom and tools. <strong>☰</strong> menu also has Open PDF. All pages
+              scroll in one column; Ctrl+scroll (⌘ on Mac) zooms. Use the <strong>other pane</strong> for a quick reference
+              page or PDF while you keep reading here — like leafing through a paper book.
+            </p>
+          </div>
+          <div class="pane-float-layer">
+            <p class="pane-doc-name pane-float-docname" aria-live="polite"></p>
+            <div class="pane-float-bottom">
+              <div class="pane-float-nav pill-bar" role="toolbar" aria-label="Left page">
+                <button type="button" class="icon-btn icon-btn--compact" data-action="prev" aria-label="Previous page">
+                  ‹
+                </button>
+                <input
+                  class="page-input page-input--compact"
+                  type="number"
+                  min="1"
+                  value="1"
+                  inputmode="numeric"
+                  aria-label="Left page number"
+                />
+                <button type="button" class="icon-btn icon-btn--compact" data-action="next" aria-label="Next page">
+                  ›
+                </button>
+              </div>
+              <button
+                type="button"
+                class="icon-btn pane-tools-fab"
+                id="pane-tools-left"
+                aria-expanded="false"
+                aria-controls="pane-flyout-left"
+                aria-label="Tools, zoom, and Open PDF"
+                title="Tools &amp; Open PDF"
+              >
+                ⋯
+              </button>
+            </div>
+          </div>
+          <div id="pane-flyout-backdrop-left" class="pane-flyout-backdrop" hidden aria-hidden="true"></div>
+          <div id="pane-flyout-left" class="pane-flyout" role="dialog" aria-label="Left pane tools" hidden>
+            <div class="pane-flyout-inner">
+              <div class="pane-flyout-group">
+                <span class="pane-flyout-label">Zoom</span>
+                <div class="pane-flyout-row pane-flyout-row--zoom">
+                  <button type="button" class="icon-btn" id="btn-zoom-out-left" disabled aria-label="Zoom out">−</button>
+                  <span class="zoom-pct" id="zoom-pct-left" aria-live="polite">100%</span>
+                  <button type="button" class="icon-btn" id="btn-zoom-in-left" disabled aria-label="Zoom in">+</button>
+                </div>
+                <div class="pane-flyout-row">
+                  <button type="button" class="btn btn-compact btn-zoom-fit" id="btn-zoom-fit-left" disabled title="Fit whole page in pane">
+                    Fit page
+                  </button>
+                  <button type="button" class="btn btn-compact btn-zoom-width" id="btn-zoom-width-left" disabled title="Fit page width; scroll vertically">
+                    Fit width
+                  </button>
+                </div>
+              </div>
+              <div class="pane-flyout-group">
+                <label class="btn primary btn-compact btn-block">
+                  Open PDF
+                  <input id="file-input-left" type="file" accept="application/pdf,.pdf" hidden />
+                </label>
+                <button type="button" class="btn btn-compact btn-block" id="btn-add-library-left" disabled>Add to library…</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-left" disabled>Remove from library…</button>
+              </div>
+              <div class="pane-flyout-group" role="group" aria-label="Left: print">
+                <span class="pane-flyout-label">Print</span>
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-with-hl" disabled title="PDF pages plus highlights and note pins">
+                  With highlights
+                </button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-without-hl" disabled title="PDF pages only — hides highlights and note pins">
+                  Without highlights
+                </button>
+              </div>
+              <div class="pane-flyout-group pane-flyout-annotate" role="group" aria-label="Left: selection and notes">
+                <button type="button" class="btn btn-compact" id="btn-copy-left" disabled>Copy</button>
+                <button
+                  type="button"
+                  class="btn btn-compact"
+                  id="btn-highlight-left"
+                  disabled
+                  title="Pick color — Shift+click uses last color"
+                >
+                  Highlight
+                </button>
+                <button type="button" class="btn btn-compact btn-toggle-note" id="btn-note-left" aria-pressed="false" disabled>
+                  Place note
+                </button>
+                <button type="button" class="btn btn-compact" id="btn-marks-left" disabled>Marks</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider" aria-hidden="true"></div>
+
+      <section class="pane" data-side="right">
+        <div class="canvas-wrap">
+          <div class="canvas-scroll">
+            <div class="single-page-shell">
+              <div class="page-viewport">
+                <canvas class="pdf-canvas"></canvas>
+                <div class="annotation-highlights" aria-hidden="true"></div>
+                <div class="text-layer"></div>
+                <div class="annotation-notes"></div>
+              </div>
+            </div>
+            <div class="continuous-stack" hidden></div>
+          </div>
+          <div class="placeholder">
+            <p class="placeholder-hint">Choose a PDF for this pane:</p>
+            <label class="btn primary placeholder-open" for="file-input-right">Open PDF</label>
+            <p class="placeholder-sub">
+              Or tap <strong>⋯</strong> (bottom-right) for zoom and tools. <strong>☰</strong> menu also has Open PDF. All pages
+              scroll in one column; Ctrl+scroll (⌘ on Mac) zooms. Use the <strong>other pane</strong> for a quick reference
+              page or PDF while you keep reading here — like leafing through a paper book.
+            </p>
+          </div>
+          <div class="pane-float-layer">
+            <p class="pane-doc-name pane-float-docname" aria-live="polite"></p>
+            <div class="pane-float-bottom">
+              <div class="pane-float-nav pill-bar" role="toolbar" aria-label="Right page">
+                <button type="button" class="icon-btn icon-btn--compact" data-action="prev" aria-label="Previous page">
+                  ‹
+                </button>
+                <input
+                  class="page-input page-input--compact"
+                  type="number"
+                  min="1"
+                  value="1"
+                  inputmode="numeric"
+                  aria-label="Right page number"
+                />
+                <button type="button" class="icon-btn icon-btn--compact" data-action="next" aria-label="Next page">
+                  ›
+                </button>
+              </div>
+              <button
+                type="button"
+                class="icon-btn pane-tools-fab"
+                id="pane-tools-right"
+                aria-expanded="false"
+                aria-controls="pane-flyout-right"
+                aria-label="Tools, zoom, and Open PDF"
+                title="Tools &amp; Open PDF"
+              >
+                ⋯
+              </button>
+            </div>
+          </div>
+          <div id="pane-flyout-backdrop-right" class="pane-flyout-backdrop" hidden aria-hidden="true"></div>
+          <div id="pane-flyout-right" class="pane-flyout" role="dialog" aria-label="Right pane tools" hidden>
+            <div class="pane-flyout-inner">
+              <div class="pane-flyout-group">
+                <span class="pane-flyout-label">Zoom</span>
+                <div class="pane-flyout-row pane-flyout-row--zoom">
+                  <button type="button" class="icon-btn" id="btn-zoom-out-right" disabled aria-label="Zoom out">−</button>
+                  <span class="zoom-pct" id="zoom-pct-right" aria-live="polite">100%</span>
+                  <button type="button" class="icon-btn" id="btn-zoom-in-right" disabled aria-label="Zoom in">+</button>
+                </div>
+                <div class="pane-flyout-row">
+                  <button type="button" class="btn btn-compact btn-zoom-fit" id="btn-zoom-fit-right" disabled title="Fit whole page in pane">
+                    Fit page
+                  </button>
+                  <button type="button" class="btn btn-compact btn-zoom-width" id="btn-zoom-width-right" disabled title="Fit page width; scroll vertically">
+                    Fit width
+                  </button>
+                </div>
+              </div>
+              <div class="pane-flyout-group">
+                <label class="btn primary btn-compact btn-block">
+                  Open PDF
+                  <input id="file-input-right" type="file" accept="application/pdf,.pdf" hidden />
+                </label>
+                <button type="button" class="btn btn-compact btn-block" id="btn-add-library-right" disabled>Add to library…</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-right" disabled>Remove from library…</button>
+              </div>
+              <div class="pane-flyout-group" role="group" aria-label="Right: print">
+                <span class="pane-flyout-label">Print</span>
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-with-hl" disabled title="PDF pages plus highlights and note pins">
+                  With highlights
+                </button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-without-hl" disabled title="PDF pages only — hides highlights and note pins">
+                  Without highlights
+                </button>
+              </div>
+              <div class="pane-flyout-group pane-flyout-annotate" role="group" aria-label="Right: selection and notes">
+                <button type="button" class="btn btn-compact" id="btn-copy-right" disabled>Copy</button>
+                <button
+                  type="button"
+                  class="btn btn-compact"
+                  id="btn-highlight-right"
+                  disabled
+                  title="Pick color — Shift+click uses last color"
+                >
+                  Highlight
+                </button>
+                <button type="button" class="btn btn-compact btn-toggle-note" id="btn-note-right" aria-pressed="false" disabled>
+                  Place note
+                </button>
+                <button type="button" class="btn btn-compact" id="btn-marks-right" disabled>Marks</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="dialog-help" class="app-dialog app-dialog-help">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">How to use Leap reader</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-help" aria-label="Close">×</button>
+        </div>
+        <div class="help-body">
+          <p class="help-lead">
+            The key feature of Leap reader is that it gives you much the same capability as a
+            <strong>physical paper-bound book</strong>: you can <strong>leap</strong> to another page or document for a quick
+            reference while <strong>still maintaining focus</strong> on the page you are reading. That makes reading
+            <strong>technical documents</strong> much easier.
+          </p>
+          <section class="help-section">
+            <h3>Menu &amp; layout</h3>
+            <ul>
+              <li>Tap <strong>☰</strong> (top-left) for <strong>Recent</strong>, <strong>Libraries</strong>, <strong>Export highlights &amp; notes</strong>, <strong>Help</strong>, <strong>About</strong>, and <strong>Panes</strong> (split vs single).</li>
+              <li>On a narrow window with two panes, the menu also has <strong>View → Split / Tabs</strong> (stacked vs one pane at a time).</li>
+              <li>When only one pane shows, use the floating <strong>Left</strong> / <strong>Right</strong> pill under the title to switch slots.</li>
+            </ul>
+          </section>
+          <section class="help-section">
+            <h3>Two panes &amp; files</h3>
+            <ul>
+              <li><strong>Left</strong> and <strong>Right</strong> are independent: each can show a different PDF or different pages of the same file.</li>
+              <li>
+                Tap <strong>⋯</strong> on a pane (bottom-right) for <strong>Open PDF</strong>, zoom, library actions,
+                <strong>Print</strong> (with or without highlights and note pins), copy, highlight, notes, and marks.
+              </li>
+            </ul>
+          </section>
+          <section class="help-section">
+            <h3>Recent &amp; Libraries</h3>
+            <ul>
+              <li><strong>Recent</strong> lists PDFs saved on this device. Use <strong>Left</strong> / <strong>Right</strong> to open one into a pane.</li>
+              <li><strong>Libraries</strong> opens collections full screen. Open a document from a library with its primary control or title.</li>
+              <li>
+                Every time you open a PDF, it is also added to an <strong>Imported</strong> library (created automatically). You can still use other libraries and remove items from <strong>Imported</strong> if you like.
+              </li>
+            </ul>
+          </section>
+          <section class="help-section">
+            <h3>Pages, zoom &amp; scrolling</h3>
+            <ul>
+              <li>All pages are shown in one scrollable column. The bottom <strong>‹ ›</strong> bar and page field jump to a page (scroll into view).</li>
+              <li>In the <strong>⋯</strong> panel: <strong>Fit width</strong> / <strong>Fit page</strong> and <strong>−</strong> / <strong>+</strong>. Hold <strong>Ctrl</strong> (⌘ on Mac) and scroll the wheel to zoom.</li>
+            </ul>
+          </section>
+          <section class="help-section">
+            <h3>Text, highlights &amp; notes</h3>
+            <ul>
+              <li>
+                Select text to open a floating bar with <strong>Copy</strong>, <strong>Highlight</strong>, and
+                <strong>Note</strong> (no need to open <strong>⋯</strong> first). <strong>Highlight</strong> opens the color
+                palette; <strong>Shift+click Highlight</strong> (here or in <strong>⋯</strong>) saves with your last color.
+                <strong>Ctrl+Shift+H</strong> / <strong>⌘+Shift+H</strong> (last color) and
+                <strong>Ctrl+Shift+N</strong> / <strong>⌘+Shift+N</strong> (note on selection) also work when the page has
+                focus and you are not in a text field.
+              </li>
+              <li>The <strong>⋯</strong> menu still has the same actions. <strong>Note</strong> on the bar places a pin at the middle of the selection.</li>
+              <li>
+                <strong>Place note</strong> (toggle): tap a spot on the page. A dialog opens showing the document name,
+                pane, and page; type your note and save. Notes are stored on this device and reload when you open the same
+                file again from <strong>Recent</strong> (or after the PDF is saved to Recent when you first open it).
+              </li>
+              <li>
+                Tap a note pin on the page to <strong>edit</strong> or <strong>delete</strong>, or use <strong>Marks</strong>
+                (either pane) to see highlights and notes from <strong>every</strong> saved PDF — then <strong>Go</strong>,
+                <strong>Edit</strong>, or <strong>Delete</strong>.
+              </li>
+              <li>
+                Marks are <strong>not</strong> written into the PDF file; they are stored in the app (browser IndexedDB, or
+                on desktop in the <code>leap-reader-data</code> folder). Use the menu
+                <strong>Export highlights &amp; notes…</strong> to download a JSON backup you can archive or process elsewhere.
+              </li>
+            </ul>
+          </section>
+          <section class="help-section">
+            <h3>Libraries from a pane</h3>
+            <ul>
+              <li><strong>Add to library…</strong> / <strong>Remove from library…</strong> use the document in the pane you last used (tap the pane or open a file there first). The file must appear in <strong>Recent</strong>.</li>
+            </ul>
+          </section>
+          <section class="help-section help-section--muted">
+            <h3>Privacy</h3>
+            <p class="help-muted">
+              PDFs, libraries, and marks stay on this browser or device only; nothing is uploaded by Leap reader.
+            </p>
+          </section>
+        </div>
+        <form method="dialog" class="dialog-foot">
+          <button type="submit" class="btn">Close</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-about" class="app-dialog app-dialog-about" aria-labelledby="dialog-about-title">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title" id="dialog-about-title">About Leap reader</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-about" aria-label="Close">×</button>
+        </div>
+        <div class="about-body">
+          <p class="about-lead">
+            The key feature is that Leap reader gives you much the same capability as a
+            <strong>physical paper-bound book</strong>: you can <strong>leap</strong> to another page or document for a quick
+            reference while <strong>still maintaining focus</strong> on the page you are reading. That makes reading
+            <strong>technical documents</strong> much easier.
+          </p>
+          <p class="help-muted">
+            Split-layout PDF reader with libraries, highlights, and notes — for web, desktop (Electron), and Android
+            (Capacitor).
+          </p>
+          <p class="help-muted about-version">Version 1.0.0</p>
+          <section class="about-section">
+            <h3 class="about-section-title">Contact</h3>
+            <p class="help-muted">
+              <a class="help-contact-link" href="mailto:sarkarbiplab@gmail.com">sarkarbiplab@gmail.com</a>
+            </p>
+          </section>
+          <p class="help-muted help-copyright about-copyright">Copyright © 2026 Biplab Sarkar. All rights reserved.</p>
+        </div>
+        <form method="dialog" class="dialog-foot">
+          <button type="submit" class="btn">Close</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-recent" class="app-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">Recent documents</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-recent" aria-label="Close">×</button>
+        </div>
+        <p class="dialog-hint">
+          Stored on this device only (browser IndexedDB). <strong>Left</strong> / <strong>Right</strong> opens into
+          that pane.
+        </p>
+        <ul id="recent-list" class="doc-list"></ul>
+        <p id="recent-empty" class="dialog-hint" hidden>No saved documents yet. Open a PDF to add it here.</p>
+        <form method="dialog" class="dialog-foot">
+          <button type="submit" class="btn">Close</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-marks" class="app-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">Highlights &amp; notes</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-marks" aria-label="Close">×</button>
+        </div>
+        <p class="dialog-hint">
+          Highlights and notes from <strong>all</strong> saved documents. <strong>Go</strong> opens the file in the pane
+          where the mark was made and jumps to that page.
+        </p>
+        <ul id="marks-list" class="doc-list marks-dialog-list"></ul>
+        <p id="marks-empty" class="dialog-hint" hidden>No highlights or notes yet.</p>
+        <form method="dialog" class="dialog-foot">
+          <button type="submit" class="btn">Close</button>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-add-note" class="app-dialog app-dialog-small">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title" id="dialog-note-title">Add note</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-add-note" aria-label="Close">
+            ×
+          </button>
+        </div>
+        <p class="dialog-note-ref" id="dialog-note-ref"></p>
+        <label class="dialog-note-field-label" for="dialog-note-text">Note</label>
+        <textarea
+          id="dialog-note-text"
+          class="text-input dialog-note-textarea"
+          rows="5"
+          maxlength="8000"
+          placeholder="Type your note…"
+        ></textarea>
+        <div class="dialog-note-foot">
+          <button type="button" class="btn danger btn-block dialog-note-delete" id="dialog-note-delete" hidden>
+            Delete note
+          </button>
+          <div class="dialog-foot row dialog-note-actions">
+            <button type="button" class="btn" id="dialog-note-cancel">Cancel</button>
+            <button type="button" class="btn primary" id="dialog-note-save">Save note</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <div
+      id="selection-float"
+      class="selection-float"
+      hidden
+      role="toolbar"
+      aria-label="Text selection"
+    >
+      <button type="button" class="btn btn-compact" id="selection-float-copy">Copy</button>
+      <button
+        type="button"
+        class="btn btn-compact primary"
+        id="selection-float-highlight"
+        title="Highlight — pick a color (Shift+click: last color)"
+      >
+        Highlight
+      </button>
+      <button type="button" class="btn btn-compact" id="selection-float-note" title="Add note at this text">
+        Note
+      </button>
+    </div>
+
+    <dialog id="dialog-add-library" class="app-dialog app-dialog-small">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">Add to library</h2>
+          <button type="button" class="icon-btn dialog-close" data-close-dialog="dialog-add-library" aria-label="Close">×</button>
+        </div>
+        <p class="dialog-add-line">Add “<span id="add-doc-name"></span>” to:</p>
+        <select id="add-library-select" class="text-input select-full" aria-label="Library"></select>
+        <div class="dialog-foot row">
+          <button type="button" class="btn" data-close-dialog="dialog-add-library">Cancel</button>
+          <button type="button" class="btn primary" id="btn-add-library-confirm">Add</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-remove-library" class="app-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title" id="remove-lib-dialog-title">Remove</h2>
+          <button
+            type="button"
+            class="icon-btn dialog-close"
+            data-close-dialog="dialog-remove-library"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="dialog-hint" id="remove-lib-dialog-hint"></p>
+        <ul id="remove-lib-checklist" class="doc-list bulk-checklist"></ul>
+        <p id="remove-lib-empty" class="dialog-hint" hidden></p>
+        <div class="dialog-foot row">
+          <button type="button" class="btn" data-close-dialog="dialog-remove-library">Cancel</button>
+          <button type="button" class="btn danger" id="btn-remove-lib-confirm">Remove</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div
+      id="highlight-color-popover"
+      class="highlight-color-popover"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="highlight-color-popover-title"
+    >
+      <p id="highlight-color-popover-title" class="highlight-color-popover-title">Choose highlight color</p>
+      <div class="highlight-color-swatches" role="group" aria-label="Highlight colors">
+        <button type="button" class="highlight-swatch highlight-swatch--yellow" data-hl-color="yellow" aria-label="Yellow"></button>
+        <button type="button" class="highlight-swatch highlight-swatch--green" data-hl-color="green" aria-label="Green"></button>
+        <button type="button" class="highlight-swatch highlight-swatch--blue" data-hl-color="blue" aria-label="Blue"></button>
+        <button type="button" class="highlight-swatch highlight-swatch--pink" data-hl-color="pink" aria-label="Pink"></button>
+        <button type="button" class="highlight-swatch highlight-swatch--orange" data-hl-color="orange" aria-label="Orange"></button>
+        <button type="button" class="highlight-swatch highlight-swatch--purple" data-hl-color="purple" aria-label="Purple"></button>
+      </div>
+      <button type="button" class="btn btn-small highlight-color-cancel" id="highlight-color-cancel">Cancel</button>
+    </div>
+
+    <div
+      id="libraries-panel"
+      class="libraries-embed-panel"
+      hidden
+      role="region"
+      aria-label="Libraries"
+      aria-hidden="true"
+    >
+      <iframe
+        id="libraries-iframe"
+        class="libraries-embed-iframe"
+        title="Libraries"
+        src="./libraries.html"
+        tabindex="-1"
+      ></iframe>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

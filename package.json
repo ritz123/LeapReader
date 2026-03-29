@@ -1,0 +1,72 @@
+{
+  "name": "leap-reader",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "author": "Leap reader",
+  "description": "Split-pane PDF reader with libraries, highlights, and notes.",
+  "scripts": {
+    "dev": "vite",
+    "desktop": "vite --open",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "desktop:start": "electron .",
+    "desktop:build": "npm run build && electron .",
+    "start:desktop": "bash scripts/run-desktop.sh",
+    "build:dist": "bash scripts/build-dist.sh",
+    "build:dist:appimage": "bash scripts/build-dist.sh AppImage",
+    "build:dist:deb": "bash scripts/build-dist.sh deb",
+    "pack:linux": "bash scripts/build-dist.sh",
+    "cap:sync": "cap sync",
+    "cap:open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "~5.6.0",
+    "vite": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.leapreader.app",
+    "productName": "Leap reader",
+    "executableName": "leap-reader",
+    "copyright": "Copyright © Leap reader",
+    "publish": null,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/icons",
+        "to": "icons",
+        "filter": ["**/*"]
+      }
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Office",
+      "synopsis": "Split-pane PDF reader with highlights and libraries",
+      "maintainer": "Leap reader <noreply@localhost>",
+      "icon": "build/icons/icon.png",
+      "desktop": {
+        "MimeType": "application/pdf;",
+        "Keywords": "pdf;reader;document;"
+      }
+    },
+    "deb": {
+      "depends": []
+    }
+  }
+}

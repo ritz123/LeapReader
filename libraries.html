@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="color-scheme" content="light" />
+    <title>Libraries — Leap reader</title>
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="libraries-standalone">
+    <header class="libraries-standalone-header">
+      <h1 class="libraries-standalone-title">Libraries</h1>
+      <div class="libraries-standalone-actions">
+        <a href="./index.html" class="btn" id="libs-link-reader">← Reader</a>
+      </div>
+    </header>
+    <p class="dialog-hint libraries-standalone-hint" id="libs-page-hint">
+      PDFs live on this device (IndexedDB). Tap a document name or <strong>Open</strong> to load it in the reader;
+      <strong>Left</strong> / <strong>Right</strong> target a specific pane.
+    </p>
+    <div class="new-library-row libraries-new-row">
+      <input
+        id="libs-new-name"
+        type="text"
+        class="text-input"
+        placeholder="New library name"
+        autocomplete="off"
+      />
+      <button type="button" class="btn primary" id="libs-btn-new-library">Create</button>
+    </div>
+    <main id="libs-page-list" class="library-list libraries-page-main"></main>
+
+    <div id="libs-toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <dialog id="dialog-libs-bulk-add" class="app-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">Add documents</h2>
+          <button
+            type="button"
+            class="icon-btn dialog-close"
+            data-libs-close="dialog-libs-bulk-add"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="dialog-add-line">
+          Choose saved PDFs to add to <strong id="libs-bulk-lib-title"></strong>:
+        </p>
+        <ul id="libs-bulk-checklist" class="doc-list bulk-checklist"></ul>
+        <p id="libs-bulk-empty" class="dialog-hint" hidden>All recent documents are already in this library.</p>
+        <div class="dialog-foot row">
+          <button type="button" class="btn" data-libs-close="dialog-libs-bulk-add">Cancel</button>
+          <button type="button" class="btn primary" id="libs-btn-bulk-add-confirm">Add selected</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="dialog-libs-remove-docs" class="app-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-head">
+          <h2 class="dialog-title">Remove from library</h2>
+          <button
+            type="button"
+            class="icon-btn dialog-close"
+            data-libs-close="dialog-libs-remove-docs"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="dialog-hint" id="libs-remove-hint"></p>
+        <ul id="libs-remove-checklist" class="doc-list bulk-checklist"></ul>
+        <p id="libs-remove-empty" class="dialog-hint" hidden></p>
+        <div class="dialog-foot row">
+          <button type="button" class="btn" data-libs-close="dialog-libs-remove-docs">Cancel</button>
+          <button type="button" class="btn danger" id="libs-btn-remove-confirm">Remove</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/libraries-page.ts"></script>
+  </body>
+</html>
