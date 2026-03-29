@@ -11,8 +11,8 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
-pass() { echo "  PASS  $*"; ((PASS++)); }
-fail() { echo "  FAIL  $*" >&2; ((FAIL++)); }
+pass() { echo "  PASS  $*"; PASS=$((PASS + 1)); }
+fail() { echo "  FAIL  $*" >&2; FAIL=$((FAIL + 1)); }
 section() { echo; echo "── $* ──"; }
 
 # ── Locate the AppImage ─────────────────────────────────────────────────────
@@ -123,10 +123,11 @@ done
 section "Version"
 
 # Extract package.json from the asar to read the bundled version.
-npx --yes @electron/asar extract-file "$ASAR" package.json /tmp/asar-package.json 2>/dev/null || true
+# extract-file writes to the current directory, so cd into WORKDIR first.
+(cd "$WORKDIR" && npx --yes @electron/asar extract-file "$ASAR" package.json 2>/dev/null) || true
 
-if [[ -f /tmp/asar-package.json ]]; then
-  BUNDLED_VERSION="$(node -p "require('/tmp/asar-package.json').version" 2>/dev/null || echo "")"
+if [[ -f "$WORKDIR/package.json" ]]; then
+  BUNDLED_VERSION="$(node -p "require('$WORKDIR/package.json').version" 2>/dev/null || echo "")"
   pass "Bundled version: $BUNDLED_VERSION"
 
   # Check AppImage filename contains the version.
@@ -147,7 +148,39 @@ if [[ -f /tmp/asar-package.json ]]; then
     fi
   fi
 else
-  fail "Could not extract package.json from asar"
+  fail "Could not extract package.json from asar (check that @electron/asar is available)"
+fi
+
+# ── Test 7: smoke launch (requires Xvfb) ────────────────────────────────────
+section "Smoke launch"
+
+if command -v xvfb-run > /dev/null 2>&1; then
+  LAUNCH_LOG="$(mktemp)"
+  # Run for 8 seconds; exit 124 = timeout (app was still alive) = good.
+  timeout 8 xvfb-run --auto-servernum -- \
+    "$APPIMAGE_ABS" --no-sandbox --disable-gpu \
+    > "$LAUNCH_LOG" 2>&1 || LAUNCH_EXIT=$?
+  LAUNCH_EXIT="${LAUNCH_EXIT:-0}"
+
+  if grep -q "Missing dist/" "$LAUNCH_LOG"; then
+    fail "App reported missing dist/ folder — web assets not bundled correctly"
+    cat "$LAUNCH_LOG" >&2
+  else
+    pass "App started without 'Missing dist/' error"
+  fi
+
+  if [[ "$LAUNCH_EXIT" -eq 124 ]]; then
+    pass "App stayed running for 8 seconds (killed by timeout as expected)"
+  elif [[ "$LAUNCH_EXIT" -eq 0 ]]; then
+    pass "App exited cleanly"
+  else
+    fail "App crashed with exit code $LAUNCH_EXIT"
+    cat "$LAUNCH_LOG" >&2
+  fi
+
+  rm -f "$LAUNCH_LOG"
+else
+  echo "  SKIP  Xvfb not available — skipping launch test"
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────

@@ -11,7 +11,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DIST = path.resolve(__dirname, "..", "dist");
+// app.getAppPath() is the correct API for locating packaged app files:
+// it returns the asar root when packaged, or the project root in dev.
+// __dirname is kept for PRELOAD since that file lives next to main.mjs.
+const DIST = path.join(app.getAppPath(), "dist");
 const PRELOAD = path.join(__dirname, "preload.mjs");
 
 function windowIconPath() {
@@ -243,7 +246,7 @@ if (!gotLock) {
     Menu.setApplicationMenu(null);
 
     try {
-      await fs.access(DIST);
+      await fs.access(path.join(DIST, "index.html"));
     } catch {
       console.error(
         "Missing dist/ folder. Run: npm run build\nThen: npm run desktop:start"
