@@ -15,6 +15,7 @@
     "desktop:build": "npm run build && electron .",
     "start:desktop": "bash scripts/run-desktop.sh",
     "build:dist": "bash scripts/build-dist.sh",
+    "release": "bash scripts/release.sh",
     "build:dist:appimage": "bash scripts/build-dist.sh AppImage",
     "build:dist:deb": "bash scripts/build-dist.sh deb",
     "pack:linux": "bash scripts/build-dist.sh",
