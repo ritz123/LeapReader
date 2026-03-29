@@ -465,6 +465,20 @@
               </a>
             </p>
           </section>
+          <section class="about-section">
+            <h3 class="about-section-title">Reset preferences</h3>
+            <p class="help-muted">Clears layout and display preferences (pane mode, zoom, highlight colour) and reloads the app. Your libraries, documents, highlights, and notes are not affected.</p>
+            <div id="reset-prefs-idle">
+              <button type="button" class="btn danger" id="btn-reset-prefs">Reset preferences…</button>
+            </div>
+            <div id="reset-prefs-confirm" hidden>
+              <p class="help-muted reset-confirm-prompt">This will clear your preferences and reload. Continue?</p>
+              <div class="reset-confirm-row">
+                <button type="button" class="btn danger" id="btn-reset-prefs-yes">Yes, reset</button>
+                <button type="button" class="btn" id="btn-reset-prefs-cancel">Cancel</button>
+              </div>
+            </div>
+          </section>
           <p class="help-muted help-copyright about-copyright">Copyright © 2026 Biplab Sarkar. All rights reserved.</p>
         </div>
         <form method="dialog" class="dialog-foot">

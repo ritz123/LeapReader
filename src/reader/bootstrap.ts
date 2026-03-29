@@ -16,7 +16,7 @@ import {
   updateSelectionButtons,
 } from "./chrome-toolbar";
 import { copySelectionToClipboard } from "./copy-clipboard";
-import { NARROW_MAX_PX, ZOOM_STEP } from "./config";
+import { NARROW_MAX_PX, ZOOM_STEP, LAYOUT_STORAGE_KEY, PANE_MODE_STORAGE_KEY, LAST_HIGHLIGHT_COLOR_KEY } from "./config";
 import { bumpContinuousRevForOpenContinuousPanes } from "./continuous-helpers";
 import { waitLayout } from "./dom";
 import { wireFileInput } from "./file-open";
@@ -111,7 +111,27 @@ export function bootstrapReader(): void {
 
   document.getElementById("btn-about")?.addEventListener("click", () => {
     setAppMenuOpen(false);
+    // Reset confirm state each time the dialog opens.
+    document.getElementById("reset-prefs-idle")?.removeAttribute("hidden");
+    document.getElementById("reset-prefs-confirm")?.setAttribute("hidden", "");
     (document.getElementById("dialog-about") as HTMLDialogElement | null)?.showModal();
+  });
+
+  document.getElementById("btn-reset-prefs")?.addEventListener("click", () => {
+    document.getElementById("reset-prefs-idle")?.setAttribute("hidden", "");
+    document.getElementById("reset-prefs-confirm")?.removeAttribute("hidden");
+  });
+
+  document.getElementById("btn-reset-prefs-cancel")?.addEventListener("click", () => {
+    document.getElementById("reset-prefs-idle")?.removeAttribute("hidden");
+    document.getElementById("reset-prefs-confirm")?.setAttribute("hidden", "");
+  });
+
+  document.getElementById("btn-reset-prefs-yes")?.addEventListener("click", () => {
+    localStorage.removeItem(PANE_MODE_STORAGE_KEY);
+    localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    localStorage.removeItem(LAST_HIGHLIGHT_COLOR_KEY);
+    location.reload();
   });
 
   for (const side of ["left", "right"] as const) {

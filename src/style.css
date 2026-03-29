@@ -1121,6 +1121,15 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   background: var(--surface);
 }
 
+.reset-confirm-prompt {
+  margin-bottom: 0.5rem;
+}
+
+.reset-confirm-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .text-input {
   flex: 1;
   min-width: 0;
