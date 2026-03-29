@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.example.pdfsplitreader"
+    namespace "com.leapreader.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.example.pdfsplitreader"
+        applicationId "com.leapreader.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode Integer.parseInt(System.getenv("VERSION_CODE") ?: "1")
+        versionName (System.getenv("VERSION_NAME") ?: "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +16,30 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
+    def envKeystorePath     = System.getenv("ANDROID_KEYSTORE_PATH")
+    def envKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+    def envKeyAlias         = System.getenv("ANDROID_KEY_ALIAS")
+    def envKeyPassword      = System.getenv("ANDROID_KEY_PASSWORD")
+    def canSign             = envKeystorePath && envKeystorePassword && envKeyAlias && envKeyPassword
+
+    signingConfigs {
+        release {
+            if (canSign) {
+                storeFile     file(envKeystorePath)
+                storePassword envKeystorePassword
+                keyAlias      envKeyAlias
+                keyPassword   envKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig canSign ? signingConfigs.release : null
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
