@@ -79,6 +79,59 @@ jobs:
           path: release/*.exe
           if-no-files-found: error
 
+  # ── 1c. Build Android ────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/keystore.jks
+
+      - name: Build signed release APK
+        run: cd android && ./gradlew assembleRelease
+        env:
+          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          VERSION_NAME: ${{ github.ref_name }}
+          VERSION_CODE: ${{ github.run_number }}
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
   # ── 2. Test Linux AppImage ───────────────────────────────────────────────────
   test-linux:
     name: Validate AppImage
@@ -111,10 +164,10 @@ jobs:
       - name: Run AppImage tests
         run: bash scripts/test-appimage.sh "" "${{ github.ref_name }}"
 
-  # ── 3. Publish (Linux tests + Windows build must pass) ───────────────────────
+  # ── 3. Publish (all platforms must pass) ─────────────────────────────────────
   publish:
     name: Publish GitHub Release
-    needs: [test-linux, build-windows]
+    needs: [test-linux, build-windows, build-android]
     runs-on: ubuntu-latest
 
     steps:
@@ -130,6 +183,12 @@ jobs:
           name: windows-installer
           path: release/
 
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: release/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -140,5 +199,6 @@ jobs:
             release/*.AppImage
             release/*.deb
             release/*.exe
+            release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
