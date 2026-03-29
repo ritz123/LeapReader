@@ -19,7 +19,7 @@ export function writeLayoutPref(mode: "split" | "tabs"): void {
 }
 
 export function readPaneModePref(): "single" | "split" {
-  return localStorage.getItem(PANE_MODE_STORAGE_KEY) === "single" ? "single" : "split";
+  return localStorage.getItem(PANE_MODE_STORAGE_KEY) === "split" ? "split" : "single";
 }
 
 export function writePaneModePref(mode: "single" | "split"): void {
