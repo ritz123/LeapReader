@@ -434,6 +434,8 @@ export function bootstrapReader(): void {
   // Check for updates in the background after startup settles.
   window.setTimeout(() => {
     void checkForUpdate(({ version, url }) => {
+      if (!version || !url) return;
+
       // Show banner inside the About dialog.
       const banner = document.getElementById("update-banner") as HTMLElement | null;
       const bannerVersion = document.getElementById("update-banner-version");
