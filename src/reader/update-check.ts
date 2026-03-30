@@ -28,10 +28,16 @@ export interface UpdateInfo {
  *   isNewer("1.3.2", "v1.4.0") → true
  *   isNewer("1.3.2", "v1.3.2") → false
  *   isNewer("1.4.0", "v1.3.9") → false
+ *
+ * Exported for unit testing; not part of the public API.
  */
-function isNewer(local: string, remote: string): boolean {
-  const parse = (v: string): number[] =>
-    v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+export function isNewer(local: string, remote: string): boolean {
+  const parse = (v: string): number[] => {
+    const parts = v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+    // Pad to 3 elements so missing segments (e.g. "1.3") compare as 0.
+    while (parts.length < 3) parts.push(0);
+    return parts;
+  };
   const [lMaj, lMin, lPat] = parse(local);
   const [rMaj, rMin, rPat] = parse(remote);
   if (rMaj !== lMaj) return rMaj > lMaj;

@@ -9,6 +9,9 @@
   "scripts": {
     "dev": "vite",
     "desktop": "vite --open",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "desktop:start": "electron .",
@@ -35,10 +38,13 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8",
+    "jsdom": "^29.0.1",
     "typescript": "~5.6.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.1.2"
   },
   "build": {
     "appId": "com.leapreader.app",

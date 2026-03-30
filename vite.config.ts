@@ -8,6 +8,16 @@ const require = createRequire(import.meta.url);
 const { version } = require("./package.json") as { version: string };
 
 export default defineConfig({
+  test: {
+    environment: "jsdom",
+    globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      include: ["src/reader/**/*.ts"],
+      exclude: ["src/reader/index.ts"],
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },

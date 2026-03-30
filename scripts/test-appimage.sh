@@ -8,6 +8,7 @@
 # Exit code 0 = all tests passed.  Non-zero = at least one test failed.
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PASS=0
 FAIL=0
 
@@ -29,6 +30,16 @@ if [[ -z "$APPIMAGE" || ! -f "$APPIMAGE" ]]; then
 fi
 
 echo "Testing: $APPIMAGE"
+
+# ── Unit tests (run before touching the AppImage) ────────────────────────────
+section "Unit tests"
+cd "$ROOT"
+if npm test; then
+  pass "All unit tests passed"
+else
+  fail "Unit tests failed — aborting AppImage validation"
+  exit 1
+fi
 
 # ── Test 1: basic file checks ────────────────────────────────────────────────
 section "File"
@@ -110,7 +121,7 @@ section "Electron main process"
 
 for REQUIRED_FILE in \
     "/electron/main.mjs" \
-    "/electron/preload.mjs" \
+    "/electron/preload.cjs" \
     "/package.json"; do
   if grep -q "^${REQUIRED_FILE}$" /tmp/asar-contents.txt; then
     pass "$REQUIRED_FILE present in asar"
