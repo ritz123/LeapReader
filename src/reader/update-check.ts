@@ -45,11 +45,17 @@ async function fetchLatestRelease(): Promise<UpdateInfo | null> {
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
-  // Re-surface a previously found update without a network hit.
+  // Re-surface a previously found update without a network hit,
+  // but only if the cached version is still strictly newer than what's running.
   const cached = localStorage.getItem(UPDATE_KEY);
   if (cached) {
     try {
-      onUpdate(JSON.parse(cached) as UpdateInfo);
+      const info = JSON.parse(cached) as UpdateInfo;
+      if (isNewer(__APP_VERSION__, info.version)) {
+        onUpdate(info);
+      } else {
+        localStorage.removeItem(UPDATE_KEY);
+      }
     } catch {
       localStorage.removeItem(UPDATE_KEY);
     }
