@@ -61,6 +61,7 @@ import {
 import { registerPdfRender, renderBothPanes } from "./render-registry";
 import { renderBothPanesImpl, renderPaneImpl } from "./pdf-render-pane";
 import { dismissSplashWhenReady } from "./splash";
+import { checkForUpdate } from "./update-check";
 import { activePaneForSelection, hideSelectionFloat } from "./selection-geometry";
 import { updateSelectionFloatBar } from "./selection-float-bar";
 import { highlightColorPopover, session } from "./session";
@@ -429,4 +430,25 @@ export function bootstrapReader(): void {
   });
 
   dismissSplashWhenReady();
+
+  // Check for updates in the background after startup settles.
+  window.setTimeout(() => {
+    void checkForUpdate(({ version, url }) => {
+      // Show banner inside the About dialog.
+      const banner = document.getElementById("update-banner") as HTMLElement | null;
+      const bannerVersion = document.getElementById("update-banner-version");
+      const bannerLink = document.getElementById("update-banner-link") as HTMLAnchorElement | null;
+      if (banner && bannerVersion && bannerLink) {
+        bannerVersion.textContent = version;
+        bannerLink.href = url;
+        banner.hidden = false;
+      }
+
+      // One-time toast — only show if the About dialog is not already open.
+      const aboutDialog = document.getElementById("dialog-about") as HTMLDialogElement | null;
+      if (!aboutDialog?.open) {
+        showToast(`Update available: ${version}`, 6000);
+      }
+    });
+  }, 3000);
 }
