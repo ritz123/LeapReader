@@ -60,7 +60,12 @@ async function isProductionBuild(): Promise<boolean> {
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
-  if (!(await isProductionBuild())) return;
+  if (!(await isProductionBuild())) {
+    // Clear any stale update record left from a previous run in packaged mode.
+    localStorage.removeItem(UPDATE_KEY);
+    localStorage.removeItem(LAST_CHECK_KEY);
+    return;
+  }
   // Re-surface a previously found update without a network hit,
   // but only if the cached version is still strictly newer than what's running.
   const cached = localStorage.getItem(UPDATE_KEY);
