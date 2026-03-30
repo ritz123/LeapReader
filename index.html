@@ -118,13 +118,13 @@
             </div>
             <div class="continuous-stack" hidden></div>
           </div>
+          <div class="doc-view" hidden></div>
           <div class="placeholder">
-            <p class="placeholder-hint">Choose a PDF for this pane:</p>
-            <label class="btn primary placeholder-open" for="file-input-left">Open PDF</label>
+            <p class="placeholder-hint">Open a document:</p>
+            <label class="btn primary placeholder-open" for="file-input-left">Open file</label>
             <p class="placeholder-sub">
-              Or tap <strong>⋯</strong> (bottom-right) for zoom and tools. <strong>☰</strong> menu also has Open PDF. All pages
-              scroll in one column; Ctrl+scroll (⌘ on Mac) zooms. Use the <strong>other pane</strong> for a quick reference
-              page or PDF while you keep reading here — like leafing through a paper book.
+              Supports PDF, Word (.docx, .doc) and plain text (.txt). Use the <strong>other pane</strong>
+              for a reference document while you keep reading here.
             </p>
           </div>
           <div class="pane-float-layer">
@@ -181,7 +181,7 @@
               <div class="pane-flyout-group">
                 <label class="btn primary btn-compact btn-block">
                   Open PDF
-                  <input id="file-input-left" type="file" accept="application/pdf,.pdf" hidden />
+                  <input id="file-input-left" type="file" accept="application/pdf,.pdf,.doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden />
                 </label>
                 <button type="button" class="btn btn-compact btn-block" id="btn-add-library-left" disabled>Add to library…</button>
                 <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-left" disabled>Remove from library…</button>
@@ -231,13 +231,13 @@
             </div>
             <div class="continuous-stack" hidden></div>
           </div>
+          <div class="doc-view" hidden></div>
           <div class="placeholder">
-            <p class="placeholder-hint">Choose a PDF for this pane:</p>
-            <label class="btn primary placeholder-open" for="file-input-right">Open PDF</label>
+            <p class="placeholder-hint">Open a document:</p>
+            <label class="btn primary placeholder-open" for="file-input-right">Open file</label>
             <p class="placeholder-sub">
-              Or tap <strong>⋯</strong> (bottom-right) for zoom and tools. <strong>☰</strong> menu also has Open PDF. All pages
-              scroll in one column; Ctrl+scroll (⌘ on Mac) zooms. Use the <strong>other pane</strong> for a quick reference
-              page or PDF while you keep reading here — like leafing through a paper book.
+              Supports PDF, Word (.docx, .doc) and plain text (.txt). Use the <strong>other pane</strong>
+              for a reference document while you keep reading here.
             </p>
           </div>
           <div class="pane-float-layer">
@@ -294,7 +294,7 @@
               <div class="pane-flyout-group">
                 <label class="btn primary btn-compact btn-block">
                   Open PDF
-                  <input id="file-input-right" type="file" accept="application/pdf,.pdf" hidden />
+                  <input id="file-input-right" type="file" accept="application/pdf,.pdf,.doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden />
                 </label>
                 <button type="button" class="btn btn-compact btn-block" id="btn-add-library-right" disabled>Add to library…</button>
                 <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-right" disabled>Remove from library…</button>

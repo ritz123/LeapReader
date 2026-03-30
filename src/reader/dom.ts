@@ -31,5 +31,6 @@ export function getPane(side: PaneSide): PaneElements {
     canvasWrap: root.querySelector<HTMLElement>(".canvas-wrap")!,
     canvasScroll: root.querySelector<HTMLElement>(".canvas-scroll")!,
     docNameEl: root.querySelector<HTMLElement>(".pane-doc-name")!,
+    docView: root.querySelector<HTMLElement>(".doc-view")!,
   };
 }

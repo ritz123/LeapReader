@@ -17,13 +17,19 @@ export interface PaneElements {
   canvasWrap: HTMLElement;
   canvasScroll: HTMLElement;
   docNameEl: HTMLElement;
+  docView: HTMLElement;
 }
+
+export type DocType = "pdf" | "docx" | "doc" | "txt";
 
 export interface PanePdfState {
   doc: PDFDocumentProxy | null;
   name: string;
   storageId: string | null;
   annotationDocId: string;
+  /** Non-null when the pane holds a word/text document rendered as HTML. */
+  docHtml: string | null;
+  docType: DocType;
 }
 
 export type PaneBaseFit = "page" | "width";

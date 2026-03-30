@@ -27,6 +27,10 @@ export async function clearPane(side: PaneSide): Promise<void> {
   session.paneScrollMode[side] = "continuous";
   teardownContinuousUi(side);
   const pe = getPane(side);
+  // Ensure doc-view is hidden and canvas-scroll is restored.
+  pe.docView.hidden = true;
+  pe.docView.innerHTML = "";
+  pe.canvasScroll.hidden = false;
   pe.singlePageShell.hidden = false;
   pe.continuousStack.hidden = true;
   updatePaneChrome(side);
@@ -64,8 +68,8 @@ export async function loadPdfBufferInitialBoth(
     pdfjsLib.getDocument({ data: new Uint8Array(b2), ...opts }).promise,
   ]);
   const ann = storageId ?? `unsaved:${name}:${dataByteLength}`;
-  session.paneState.left = { doc: docL, name, storageId, annotationDocId: ann };
-  session.paneState.right = { doc: docR, name, storageId, annotationDocId: ann };
+  session.paneState.left = { doc: docL, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
+  session.paneState.right = { doc: docR, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
   getPane("left").pageInput.value = "1";
   getPane("right").pageInput.value = "1";
   updatePaneChrome("left");
@@ -106,11 +110,19 @@ export async function loadPdfBuffer(
     useSystemFonts: true,
   }).promise;
   const doc = await task;
+  // Ensure doc-view is hidden when loading a PDF.
+  const pe = getPane(side);
+  pe.docView.hidden = true;
+  pe.docView.innerHTML = "";
+  pe.canvasScroll.hidden = false;
+
   session.paneState[side] = {
     doc,
     name,
     storageId,
     annotationDocId: storageId ?? `unsaved:${name}:${dataByteLength}`,
+    docHtml: null,
+    docType: "pdf",
   };
   session.paneZoomMultiplier[side] = 1;
   getPane(side).pageInput.value = "1";
