@@ -227,6 +227,23 @@ export function bootstrapReader(): void {
   }
 
   for (const side of ["left", "right"] as const) {
+    // Restore persisted line-numbers preference.
+    const lnKey = `lineNumbers-${side}`;
+    const lnBtn = document.getElementById(`btn-line-numbers-${side}`) as HTMLButtonElement | null;
+    const docViewEl = document.querySelector<HTMLElement>(`.pane[data-side="${side}"] .doc-view`);
+    const applyLineNumbers = (on: boolean) => {
+      if (lnBtn) lnBtn.setAttribute("aria-pressed", String(on));
+      if (docViewEl) docViewEl.classList.toggle("doc-view--line-numbers", on);
+    };
+    applyLineNumbers(localStorage.getItem(lnKey) === "true");
+    lnBtn?.addEventListener("click", () => {
+      const next = lnBtn.getAttribute("aria-pressed") !== "true";
+      applyLineNumbers(next);
+      localStorage.setItem(lnKey, String(next));
+    });
+  }
+
+  for (const side of ["left", "right"] as const) {
     document.getElementById(`btn-copy-${side}`)?.addEventListener("click", () => {
       void copySelectionToClipboard();
     });

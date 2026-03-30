@@ -61,7 +61,7 @@ export function updateHeaderSummary(): void {
   const titleEl = document.getElementById("doc-title")!;
   const L = session.paneState.left;
   const R = session.paneState.right;
-  if (!L.doc && !R.doc) {
+  if (!L.doc && !L.docHtml && !R.doc && !R.docHtml) {
     countEl.textContent = "";
     titleEl.textContent = "No document";
     titleEl.removeAttribute("title");
@@ -69,8 +69,8 @@ export function updateHeaderSummary(): void {
     updateAnnotationChrome();
     return;
   }
-  const leftTitle = L.doc ? (L.name || "").trim() || "Untitled" : "—";
-  const rightTitle = R.doc ? (R.name || "").trim() || "Untitled" : "—";
+  const leftTitle = (L.doc || L.docHtml) ? (L.name || "").trim() || "Untitled" : "—";
+  const rightTitle = (R.doc || R.docHtml) ? (R.name || "").trim() || "Untitled" : "—";
   const display = `${leftTitle} | ${rightTitle}`;
   titleEl.textContent = display;
   titleEl.title = display;
@@ -84,7 +84,9 @@ export function updateHeaderSummary(): void {
 export function updatePaneChrome(side: PaneSide): void {
   const p = getPane(side);
   const st = session.paneState[side];
-  if (!st.doc) {
+  const hasContent = Boolean(st.doc || st.docHtml);
+  p.placeholder.hidden = hasContent;
+  if (!hasContent) {
     session.paneLayoutSnapshot.delete(side);
     p.canvas.classList.add("hidden");
     p.canvasWrap.classList.remove("has-doc");
@@ -93,7 +95,9 @@ export function updatePaneChrome(side: PaneSide): void {
     p.textLayer.replaceChildren();
     p.pageInput.max = "1";
     p.pageInput.value = "1";
-  } else {
+  } else if (st.docHtml) {
+    p.canvasWrap.classList.add("has-doc");
+  } else if (st.doc) {
     const n = st.doc.numPages;
     p.pageInput.max = String(n);
     const v = Math.min(Math.max(1, parseInt(p.pageInput.value, 10) || 1), n);
@@ -107,12 +111,15 @@ export function updatePaneChrome(side: PaneSide): void {
   const hasDocForPrint = Boolean(st.doc);
   if (pPrintHl) pPrintHl.disabled = !hasDocForPrint;
   if (pPrintPlain) pPrintPlain.disabled = !hasDocForPrint;
+
+  const textOptsGroup = document.getElementById(`pane-text-opts-${side}`) as HTMLElement | null;
+  if (textOptsGroup) textOptsGroup.hidden = st.docType !== "txt";
 }
 
 export function syncPaneDocLabel(side: PaneSide): void {
   const p = getPane(side);
   const st = session.paneState[side];
-  if (st.doc) {
+  if (st.doc || st.docHtml) {
     p.docNameEl.textContent = st.name;
     p.docNameEl.classList.remove("pane-doc-name--empty");
     p.docNameEl.title = st.name;

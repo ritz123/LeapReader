@@ -16,6 +16,7 @@ export interface PaneElements {
   nextBtn: HTMLButtonElement;
   canvasWrap: HTMLElement;
   canvasScroll: HTMLElement;
+  placeholder: HTMLElement;
   docNameEl: HTMLElement;
   docView: HTMLElement;
 }

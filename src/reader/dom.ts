@@ -30,6 +30,7 @@ export function getPane(side: PaneSide): PaneElements {
     nextBtn: root.querySelector<HTMLButtonElement>('[data-action="next"]')!,
     canvasWrap: root.querySelector<HTMLElement>(".canvas-wrap")!,
     canvasScroll: root.querySelector<HTMLElement>(".canvas-scroll")!,
+    placeholder: root.querySelector<HTMLElement>(".placeholder")!,
     docNameEl: root.querySelector<HTMLElement>(".pane-doc-name")!,
     docView: root.querySelector<HTMLElement>(".doc-view")!,
   };

@@ -85,12 +85,14 @@ export async function renderPaneImpl(
     return;
   }
   const p = getPane(side);
-  const doc = session.paneState[side].doc;
+  const st = session.paneState[side];
+  const doc = st.doc;
   if (!doc) {
     teardownContinuousUi(side);
     session.paneLayoutSnapshot.delete(side);
     p.canvas.classList.add("hidden");
-    p.canvasWrap.classList.remove("has-doc");
+    // Only remove has-doc if there is no text doc either; text panes keep their own chrome state.
+    if (!st.docHtml) p.canvasWrap.classList.remove("has-doc");
     p.highlightsLayer.replaceChildren();
     p.notesLayer.replaceChildren();
     p.textLayer.replaceChildren();

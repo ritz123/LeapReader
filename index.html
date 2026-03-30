@@ -180,11 +180,19 @@
               </div>
               <div class="pane-flyout-group">
                 <label class="btn primary btn-compact btn-block">
-                  Open PDF
-                  <input id="file-input-left" type="file" accept="application/pdf,.pdf,.doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden />
+                  Open file
+                  <input id="file-input-left" type="file" hidden />
                 </label>
                 <button type="button" class="btn btn-compact btn-block" id="btn-add-library-left" disabled>Add to library…</button>
                 <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-left" disabled>Remove from library…</button>
+              </div>
+              <div class="pane-flyout-group pane-text-opts" id="pane-text-opts-left" hidden>
+                <span class="pane-flyout-label">Text view</span>
+                <div class="pane-flyout-row">
+                  <button type="button" class="btn btn-compact btn-toggle-line-numbers" id="btn-line-numbers-left" aria-pressed="false">
+                    Line numbers
+                  </button>
+                </div>
               </div>
               <div class="pane-flyout-group" role="group" aria-label="Left: print">
                 <span class="pane-flyout-label">Print</span>
@@ -293,11 +301,19 @@
               </div>
               <div class="pane-flyout-group">
                 <label class="btn primary btn-compact btn-block">
-                  Open PDF
-                  <input id="file-input-right" type="file" accept="application/pdf,.pdf,.doc,.docx,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" hidden />
+                  Open file
+                  <input id="file-input-right" type="file" hidden />
                 </label>
                 <button type="button" class="btn btn-compact btn-block" id="btn-add-library-right" disabled>Add to library…</button>
                 <button type="button" class="btn btn-compact btn-block" id="btn-remove-library-right" disabled>Remove from library…</button>
+              </div>
+              <div class="pane-flyout-group pane-text-opts" id="pane-text-opts-right" hidden>
+                <span class="pane-flyout-label">Text view</span>
+                <div class="pane-flyout-row">
+                  <button type="button" class="btn btn-compact btn-toggle-line-numbers" id="btn-line-numbers-right" aria-pressed="false">
+                    Line numbers
+                  </button>
+                </div>
               </div>
               <div class="pane-flyout-group" role="group" aria-label="Right: print">
                 <span class="pane-flyout-label">Print</span>

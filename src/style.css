@@ -830,6 +830,39 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
 .doc-view td, .doc-view th { border: 1px solid #ccc; padding: 0.3em 0.6em; }
 .doc-view__text { white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; }
 
+.doc-view__line { display: block; }
+
+/* Line numbers — enabled by toggling .doc-view--line-numbers */
+.doc-view--line-numbers .doc-view__text {
+  counter-reset: line;
+  padding-left: 4.5em;
+  position: relative;
+}
+
+.doc-view--line-numbers .doc-view__line {
+  counter-increment: line;
+  position: relative;
+}
+
+.doc-view--line-numbers .doc-view__line::before {
+  content: counter(line);
+  position: absolute;
+  left: -4.5em;
+  width: 3.5em;
+  text-align: right;
+  color: var(--muted);
+  user-select: none;
+  font-size: 0.85em;
+  padding-right: 0.5em;
+  border-right: 1px solid var(--border);
+}
+
+.btn-toggle-line-numbers[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent-dim);
+  color: #fff;
+}
+
 /* Inner: scrolling only — scrollbar does not change parent .canvas-wrap dimensions,
    so ResizeObserver + fit-to-viewport do not re-run with a smaller width. */
 .canvas-scroll {
@@ -844,6 +877,10 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   flex-direction: column;
   align-items: stretch;
   scrollbar-gutter: stable;
+}
+
+.canvas-scroll[hidden] {
+  display: none !important;
 }
 
 .single-page-shell {
@@ -1088,6 +1125,10 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   font-size: 0.9rem;
   pointer-events: none;
   z-index: 5;
+}
+
+.placeholder[hidden] {
+  display: none !important;
 }
 
 .placeholder-hint {

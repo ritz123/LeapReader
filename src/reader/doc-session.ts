@@ -6,24 +6,33 @@ import { session } from "./session";
 import type { DocType, PaneSide } from "./types";
 import { syncZoomUi } from "./zoom-pane";
 
-/** Returns the DocType for a filename, or null if it is a PDF/unsupported. */
+/** Returns the DocType for a filename, or null if it is a PDF. Unknown/no extension → "txt". */
 export function docTypeFromName(name: string): DocType | null {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "pdf") return null;
   if (ext === "docx") return "docx";
   if (ext === "doc") return "doc";
-  if (ext === "txt") return "txt";
-  return null;
+  // .txt, no extension, or any other unknown extension → treat as plain text
+  return "txt";
 }
 
 /** Convert an ArrayBuffer to HTML based on the file type. */
 async function toHtml(buf: ArrayBuffer, type: DocType): Promise<string> {
   if (type === "txt") {
     const text = new TextDecoder().decode(buf);
-    const escaped = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    return `<pre class="doc-view__text">${escaped}</pre>`;
+    const lines = text
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .split("\n")
+      .map((l) => {
+        const escaped = l
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<span class="doc-view__line">${escaped}</span>`;
+      })
+      .join("");
+    return `<pre class="doc-view__text">${lines}</pre>`;
   }
   // docx and doc: use mammoth (lazy-loaded to keep the initial bundle small)
   const mammoth = (await import("mammoth")).default;
@@ -74,6 +83,7 @@ export async function loadDocBuffer(
   const pe = getPane(side);
   pe.canvasScroll.hidden = true;
   pe.docView.hidden = false;
+  pe.docView.dataset.docType = type;
   pe.docView.innerHTML = html;
 
   updatePaneChrome(side);
@@ -86,5 +96,6 @@ export function clearDocView(side: PaneSide): void {
   const pe = getPane(side);
   pe.docView.hidden = true;
   pe.docView.innerHTML = "";
+  delete pe.docView.dataset.docType;
   pe.canvasScroll.hidden = false;
 }
