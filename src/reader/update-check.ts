@@ -1,70 +1,74 @@
 /**
- * Checks GitHub Releases once per day for a newer version and surfaces a
- * banner in the About dialog + a one-time toast notification.
- *
- * Throttle key: "updateCheckAt" — ISO timestamp of last successful check.
- * Result key:   "updateAvailable" — JSON { version, url } or absent.
+ * Checks GitHub Releases once per day and notifies when a newer version
+ * is available. Results are cached in localStorage for 24 hours.
  */
 
 const REPO = "ritz123/LeapReader";
 const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
-const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const LAST_CHECK_KEY = "updateCheckAt";
 const UPDATE_KEY = "updateAvailable";
 
 export interface UpdateInfo {
+  /** Raw tag from GitHub, e.g. "v1.4.0" */
   version: string;
+  /** GitHub release page URL */
   url: string;
+  /** True when local version >= latest release */
   isUpToDate: boolean;
+  /** Set when the fetch failed */
   error?: string;
 }
 
-/** Compare two semver strings. Returns true if `b` is strictly newer than `a`. */
-function isNewer(a: string, b: string): boolean {
-  const parse = (v: string) => v.replace(/^v/, "").split(".").map(Number);
-  const [aMaj = 0, aMin = 0, aPat = 0] = parse(a);
-  const [bMaj = 0, bMin = 0, bPat = 0] = parse(b);
-  if (bMaj !== aMaj) return bMaj > aMaj;
-  if (bMin !== aMin) return bMin > aMin;
-  return bPat > aPat;
+/**
+ * Strips the optional leading "v" and compares two semver strings.
+ * Returns true only when `remote` is strictly greater than `local`.
+ *
+ * Examples:
+ *   isNewer("1.3.2", "v1.4.0") → true
+ *   isNewer("1.3.2", "v1.3.2") → false
+ *   isNewer("1.4.0", "v1.3.9") → false
+ */
+function isNewer(local: string, remote: string): boolean {
+  const parse = (v: string): number[] =>
+    v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+  const [lMaj, lMin, lPat] = parse(local);
+  const [rMaj, rMin, rPat] = parse(remote);
+  if (rMaj !== lMaj) return rMaj > lMaj;
+  if (rMin !== lMin) return rMin > lMin;
+  return rPat > lPat;
 }
 
-async function fetchLatestRelease(): Promise<UpdateInfo | null> {
-  console.log(`[update-check] fetching ${API_URL}`);
+async function fetchLatestRelease(): Promise<UpdateInfo> {
   try {
     const res = await fetch(API_URL, { headers: { Accept: "application/vnd.github+json" } });
-    console.log(`[update-check] response status: ${res.status}`);
     if (!res.ok) {
-      console.warn(`[update-check] fetch failed: HTTP ${res.status}`);
-      return { version: "", url: API_URL, isUpToDate: false, error: `HTTP ${res.status}` };
+      return { version: "", url: API_URL, isUpToDate: true, error: `HTTP ${res.status}` };
     }
     const data = (await res.json()) as { tag_name?: string; html_url?: string };
-    console.log(`[update-check] tag_name=${data.tag_name}  html_url=${data.html_url}`);
     if (!data.tag_name || !data.html_url) {
-      return { version: "", url: API_URL, isUpToDate: false, error: "No release found" };
+      return { version: "", url: API_URL, isUpToDate: true, error: "No release found" };
     }
-    return { version: data.tag_name, url: data.html_url, isUpToDate: false };
+    const isUpToDate = !isNewer(__APP_VERSION__, data.tag_name);
+    return { version: data.tag_name, url: data.html_url, isUpToDate };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.warn(`[update-check] fetch error: ${msg}`);
-    return { version: "", url: API_URL, isUpToDate: false, error: msg };
+    const error = e instanceof Error ? e.message : String(e);
+    return { version: "", url: API_URL, isUpToDate: true, error };
   }
 }
 
-/** Runs the update check (throttled). Call once after startup. */
+/** Checks for updates (throttled to once per day). Call once after startup. */
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
-  console.log(`[update-check] local=${__APP_VERSION__}`);
-
-  // Re-surface cached latest version without a network hit.
+  // Re-surface cached result immediately without a network hit.
   const cached = localStorage.getItem(UPDATE_KEY);
   if (cached) {
     try {
       const info = JSON.parse(cached) as UpdateInfo;
       if (info.version && info.url) {
+        // Recalculate isUpToDate in case the local version was upgraded.
         info.isUpToDate = !isNewer(__APP_VERSION__, info.version);
-        console.log(`[update-check] using cache: version=${info.version} isUpToDate=${info.isUpToDate}`);
         onUpdate(info);
       } else {
         localStorage.removeItem(UPDATE_KEY);
@@ -74,23 +78,18 @@ export async function checkForUpdate(
     }
   }
 
-  // Throttle: only hit the API once per day.
+  // Hit the API at most once per day.
   const lastCheck = localStorage.getItem(LAST_CHECK_KEY);
   if (lastCheck && Date.now() - new Date(lastCheck).getTime() < CHECK_INTERVAL_MS) {
-    console.log(`[update-check] throttled — last check: ${lastCheck}`);
     return;
   }
 
   const info = await fetchLatestRelease();
   localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString());
-  if (!info) return;
 
-  if (info.error) {
-    onUpdate(info);
-    return;
+  if (!info.error) {
+    localStorage.setItem(UPDATE_KEY, JSON.stringify(info));
   }
 
-  info.isUpToDate = !isNewer(__APP_VERSION__, info.version);
-  localStorage.setItem(UPDATE_KEY, JSON.stringify(info));
   onUpdate(info);
 }
