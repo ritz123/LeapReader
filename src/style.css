@@ -1176,8 +1176,34 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   margin: 0 0 0.65rem;
 }
 
-.about-version {
-  margin: 0 0 0.5rem;
+.about-version-table {
+  border-collapse: collapse;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.about-version-label {
+  color: var(--text-muted, #666);
+  padding-right: 1.25rem;
+  white-space: nowrap;
+}
+
+.about-version-value {
+  font-weight: 600;
+}
+
+.about-update-status {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.about-update-status--ok {
+  color: #1e8c45;
+}
+
+.about-update-status--new {
+  color: #b45309;
 }
 
 .update-banner {

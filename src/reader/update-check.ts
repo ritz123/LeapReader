@@ -14,6 +14,7 @@ const UPDATE_KEY = "updateAvailable";
 interface UpdateInfo {
   version: string;
   url: string;
+  isUpToDate: boolean;
 }
 
 /** Compare two semver strings. Returns true if `b` is strictly newer than `a`. */
@@ -35,7 +36,7 @@ async function fetchLatestRelease(): Promise<UpdateInfo | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as { tag_name?: string; html_url?: string };
     if (!data.tag_name || !data.html_url) return null;
-    return { version: data.tag_name, url: data.html_url };
+    return { version: data.tag_name, url: data.html_url, isUpToDate: false };
   } catch {
     return null;
   }
@@ -66,13 +67,13 @@ export async function checkForUpdate(
     localStorage.removeItem(LAST_CHECK_KEY);
     return;
   }
-  // Re-surface a previously found update without a network hit,
-  // but only if the cached version is still strictly newer than what's running.
+  // Re-surface cached latest version without a network hit.
   const cached = localStorage.getItem(UPDATE_KEY);
   if (cached) {
     try {
       const info = JSON.parse(cached) as UpdateInfo;
-      if (info.version && info.url && isNewer(__APP_VERSION__, info.version)) {
+      if (info.version && info.url) {
+        info.isUpToDate = !isNewer(__APP_VERSION__, info.version);
         onUpdate(info);
       } else {
         localStorage.removeItem(UPDATE_KEY);
@@ -92,11 +93,7 @@ export async function checkForUpdate(
   localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString());
   if (!info) return;
 
-  if (isNewer(__APP_VERSION__, info.version)) {
-    localStorage.setItem(UPDATE_KEY, JSON.stringify(info));
-    onUpdate(info);
-  } else {
-    // Running current or newer build — clear any stale record.
-    localStorage.removeItem(UPDATE_KEY);
-  }
+  info.isUpToDate = !isNewer(__APP_VERSION__, info.version);
+  localStorage.setItem(UPDATE_KEY, JSON.stringify(info));
+  onUpdate(info);
 }

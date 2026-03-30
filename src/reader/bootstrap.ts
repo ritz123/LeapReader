@@ -77,11 +77,10 @@ export function bootstrapReader(): void {
   wireFileInput("file-input-left", "left");
   wireFileInput("file-input-right", "right");
 
-  const versionLabel = `Version ${__APP_VERSION__}`;
   const splashVersion = document.getElementById("splash-version");
   const aboutVersion = document.getElementById("about-version");
-  if (splashVersion) splashVersion.textContent = versionLabel;
-  if (aboutVersion) aboutVersion.textContent = versionLabel;
+  if (splashVersion) splashVersion.textContent = `Version ${__APP_VERSION__}`;
+  if (aboutVersion) aboutVersion.textContent = __APP_VERSION__;
 
   const appMenuBtn = document.getElementById("btn-app-menu") as HTMLButtonElement | null;
   const appMenuPanel = document.getElementById("app-menu-panel") as HTMLDivElement | null;
@@ -433,23 +432,32 @@ export function bootstrapReader(): void {
 
   // Check for updates in the background after startup settles.
   window.setTimeout(() => {
-    void checkForUpdate(({ version, url }) => {
+    void checkForUpdate(({ version, url, isUpToDate }) => {
       if (!version || !url) return;
 
-      // Show banner inside the About dialog.
-      const banner = document.getElementById("update-banner") as HTMLElement | null;
-      const bannerVersion = document.getElementById("update-banner-version");
-      const bannerLink = document.getElementById("update-banner-link") as HTMLAnchorElement | null;
-      if (banner && bannerVersion && bannerLink) {
-        bannerVersion.textContent = version;
-        bannerLink.href = url;
-        banner.hidden = false;
+      // Populate the "Latest" row in the About dialog.
+      const latestRow = document.getElementById("about-latest-row") as HTMLElement | null;
+      const latestLink = document.getElementById("about-latest-version") as HTMLAnchorElement | null;
+      const updateStatus = document.getElementById("about-update-status");
+      if (latestRow && latestLink && updateStatus) {
+        latestLink.textContent = version;
+        latestLink.href = url;
+        if (isUpToDate) {
+          updateStatus.textContent = "✓ up to date";
+          updateStatus.className = "about-update-status about-update-status--ok";
+        } else {
+          updateStatus.textContent = "↑ update available";
+          updateStatus.className = "about-update-status about-update-status--new";
+        }
+        latestRow.hidden = false;
       }
 
-      // One-time toast — only show if the About dialog is not already open.
-      const aboutDialog = document.getElementById("dialog-about") as HTMLDialogElement | null;
-      if (!aboutDialog?.open) {
-        showToast(`Update available: ${version}`, 6000);
+      // Toast only when an update is available and About dialog is not open.
+      if (!isUpToDate) {
+        const aboutDialog = document.getElementById("dialog-about") as HTMLDialogElement | null;
+        if (!aboutDialog?.open) {
+          showToast(`Update available: ${version}`, 6000);
+        }
       }
     });
   }, 3000);

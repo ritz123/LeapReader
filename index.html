@@ -443,11 +443,19 @@
             Split-layout PDF reader with libraries, highlights, and notes — for web, desktop (Electron), and Android
             (Capacitor).
           </p>
-          <p class="help-muted about-version" id="about-version">Version 1.0.0</p>
-          <div id="update-banner" class="update-banner" hidden>
-            <span class="update-banner__text">Update available: <strong id="update-banner-version"></strong></span>
-            <a id="update-banner-link" class="update-banner__link" href="#" target="_blank" rel="noopener noreferrer">Download</a>
-          </div>
+          <table class="about-version-table">
+            <tr>
+              <td class="about-version-label">Installed</td>
+              <td class="about-version-value" id="about-version">1.0.0</td>
+            </tr>
+            <tr id="about-latest-row" hidden>
+              <td class="about-version-label">Latest</td>
+              <td class="about-version-value">
+                <a id="about-latest-version" class="update-banner__link" href="#" target="_blank" rel="noopener noreferrer"></a>
+                <span id="about-update-status" class="about-update-status"></span>
+              </td>
+            </tr>
+          </table>
           <section class="about-section">
             <h3 class="about-section-title">Contact</h3>
             <p class="help-muted">
