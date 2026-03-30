@@ -436,11 +436,9 @@ export function bootstrapReader(): void {
     void checkForUpdate(({ version, url }) => {
       // Show banner inside the About dialog.
       const banner = document.getElementById("update-banner") as HTMLElement | null;
-      const bannerCurrent = document.getElementById("update-banner-current");
       const bannerVersion = document.getElementById("update-banner-version");
       const bannerLink = document.getElementById("update-banner-link") as HTMLAnchorElement | null;
-      if (banner && bannerCurrent && bannerVersion && bannerLink) {
-        bannerCurrent.textContent = __APP_VERSION__;
+      if (banner && bannerVersion && bannerLink) {
         bannerVersion.textContent = version;
         bannerLink.href = url;
         banner.hidden = false;
@@ -449,7 +447,7 @@ export function bootstrapReader(): void {
       // One-time toast — only show if the About dialog is not already open.
       const aboutDialog = document.getElementById("dialog-about") as HTMLDialogElement | null;
       if (!aboutDialog?.open) {
-        showToast(`Update: ${__APP_VERSION__} → ${version}`, 6000);
+        showToast(`Update available: ${version}`, 6000);
       }
     });
   }, 3000);
