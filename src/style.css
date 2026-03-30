@@ -1160,7 +1160,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
 }
 
 .app-dialog-about {
-  width: min(26rem, 100%);
+  width: min(90vw, 100%);
 }
 
 .about-body {
