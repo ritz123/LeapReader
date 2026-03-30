@@ -51,34 +51,11 @@ async function fetchLatestRelease(): Promise<UpdateInfo | null> {
   }
 }
 
-/**
- * Returns true when running as a packaged Electron app or a hosted web build.
- * Skips the check in local dev (unpackaged Electron or localhost web).
- */
-async function isProductionBuild(): Promise<boolean> {
-  if (window.leapReaderApp) {
-    const { isPackaged } = await window.leapReaderApp.getAppInfo();
-    console.log(`[update-check] isPackaged=${isPackaged}`);
-    return isPackaged;
-  }
-  const host = window.location.hostname;
-  console.log(`[update-check] no leapReaderApp, host=${host}`);
-  return host !== "localhost" && host !== "127.0.0.1";
-}
-
 /** Runs the update check (throttled). Call once after startup. */
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
-  const isProd = await isProductionBuild();
-  console.log(`[update-check] local=${__APP_VERSION__}  isProd=${isProd}`);
-
-  if (!isProd) {
-    localStorage.removeItem(UPDATE_KEY);
-    localStorage.removeItem(LAST_CHECK_KEY);
-    console.log("[update-check] dev mode — skipping, cleared cache");
-    return;
-  }
+  console.log(`[update-check] local=${__APP_VERSION__}`);
 
   // Re-surface cached latest version without a network hit.
   const cached = localStorage.getItem(UPDATE_KEY);

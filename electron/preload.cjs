@@ -7,10 +7,6 @@ function toArrayBuffer(u8) {
   return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
 }
 
-contextBridge.exposeInMainWorld("leapReaderApp", {
-  getAppInfo: () => ipcRenderer.invoke("leap-reader-app"),
-});
-
 contextBridge.exposeInMainWorld("leapReaderStorage", {
   getDataDirPath: () => ipcRenderer.invoke("leap-reader-fs", { op: "getDataDirPath" }),
   readText: (relPath) => ipcRenderer.invoke("leap-reader-fs", { op: "readText", relPath }),
