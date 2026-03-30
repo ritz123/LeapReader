@@ -72,7 +72,7 @@ export async function checkForUpdate(
   if (cached) {
     try {
       const info = JSON.parse(cached) as UpdateInfo;
-      if (isNewer(__APP_VERSION__, info.version)) {
+      if (info.version && info.url && isNewer(__APP_VERSION__, info.version)) {
         onUpdate(info);
       } else {
         localStorage.removeItem(UPDATE_KEY);
