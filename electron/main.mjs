@@ -3,7 +3,7 @@
  * Serves the Vite build from dist/ on 127.0.0.1, then loads it in a BrowserWindow.
  * Libraries, notes, and cached PDFs persist under userData/leap-reader-data/ (see IPC leap-reader-fs).
  */
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import http from "node:http";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
@@ -225,6 +225,22 @@ function createWindow(port) {
   });
 
   void mainWindow.loadURL(`http://127.0.0.1:${port}/index.html`);
+
+  // Open any external link (e.g. the GitHub release page) in the system browser
+  // rather than in a new Electron window.
+  const appOrigin = `http://127.0.0.1:${port}`;
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (!url.startsWith(appOrigin)) {
+      void shell.openExternal(url);
+    }
+    return { action: "deny" };
+  });
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!url.startsWith(appOrigin)) {
+      event.preventDefault();
+      void shell.openExternal(url);
+    }
+  });
 
   mainWindow.on("closed", () => {
     mainWindow = null;
