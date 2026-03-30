@@ -432,25 +432,34 @@ export function bootstrapReader(): void {
 
   // Check for updates in the background after startup settles.
   window.setTimeout(() => {
-    void checkForUpdate(({ version, url, isUpToDate }) => {
-      if (!version || !url) return;
-
-      // Populate the "Latest" row in the About dialog.
+    void checkForUpdate(({ version, url, isUpToDate, error }) => {
       const latestRow = document.getElementById("about-latest-row") as HTMLElement | null;
       const latestLink = document.getElementById("about-latest-version") as HTMLAnchorElement | null;
       const updateStatus = document.getElementById("about-update-status");
-      if (latestRow && latestLink && updateStatus) {
-        latestLink.textContent = version;
+      if (!latestRow || !latestLink || !updateStatus) return;
+
+      if (error) {
+        latestLink.textContent = "check failed";
         latestLink.href = url;
-        if (isUpToDate) {
-          updateStatus.textContent = "✓ up to date";
-          updateStatus.className = "about-update-status about-update-status--ok";
-        } else {
-          updateStatus.textContent = "↑ update available";
-          updateStatus.className = "about-update-status about-update-status--new";
-        }
+        latestLink.title = url;
+        updateStatus.textContent = `(${error})`;
+        updateStatus.className = "about-update-status";
         latestRow.hidden = false;
+        return;
       }
+
+      if (!version) return;
+
+      latestLink.textContent = version;
+      latestLink.href = url;
+      if (isUpToDate) {
+        updateStatus.textContent = "✓ up to date";
+        updateStatus.className = "about-update-status about-update-status--ok";
+      } else {
+        updateStatus.textContent = "↑ update available";
+        updateStatus.className = "about-update-status about-update-status--new";
+      }
+      latestRow.hidden = false;
 
       // Toast only when an update is available and About dialog is not open.
       if (!isUpToDate) {
