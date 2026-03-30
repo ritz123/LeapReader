@@ -31,6 +31,18 @@ async function toHtml(buf: ArrayBuffer, type: DocType): Promise<string> {
   return result.value;
 }
 
+/** Load a Word / text document into both panes (used on first open). */
+export async function loadDocBufferInitialBoth(
+  buf: ArrayBuffer,
+  name: string,
+  storageId: string | null
+): Promise<void> {
+  await Promise.all([
+    loadDocBuffer(buf.slice(0), name, storageId, "left"),
+    loadDocBuffer(buf.slice(0), name, storageId, "right"),
+  ]);
+}
+
 /** Load a Word / text document into a pane. */
 export async function loadDocBuffer(
   buf: ArrayBuffer,
