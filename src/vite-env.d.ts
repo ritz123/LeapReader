@@ -6,6 +6,7 @@ declare global {
   const __APP_VERSION__: string;
   interface Window {
     leapReaderStorage?: LeapReaderFileApi;
+    leapReaderApp?: { getAppInfo: () => Promise<{ isPackaged: boolean }> };
   }
 }
 

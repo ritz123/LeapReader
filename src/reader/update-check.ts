@@ -41,10 +41,26 @@ async function fetchLatestRelease(): Promise<UpdateInfo | null> {
   }
 }
 
+/**
+ * Returns true when running as a packaged Electron app or a hosted web build.
+ * Skips the check in local dev (unpackaged Electron or localhost web).
+ */
+async function isProductionBuild(): Promise<boolean> {
+  // Electron context: ask the main process
+  if (window.leapReaderApp) {
+    const { isPackaged } = await window.leapReaderApp.getAppInfo();
+    return isPackaged;
+  }
+  // Web context: skip on localhost / 127.0.0.1
+  const host = window.location.hostname;
+  return host !== "localhost" && host !== "127.0.0.1";
+}
+
 /** Runs the update check (throttled). Call once after startup. */
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
+  if (!(await isProductionBuild())) return;
   // Re-surface a previously found update without a network hit,
   // but only if the cached version is still strictly newer than what's running.
   const cached = localStorage.getItem(UPDATE_KEY);

@@ -56,6 +56,8 @@ async function ensureDataDirs() {
   await fs.mkdir(path.join(dataRoot(), "documents"), { recursive: true });
 }
 
+ipcMain.handle("leap-reader-app", () => ({ isPackaged: app.isPackaged }));
+
 ipcMain.handle("leap-reader-fs", async (_event, payload) => {
   const { op, relPath, text, buffer } = payload ?? {};
   await ensureDataDirs();
