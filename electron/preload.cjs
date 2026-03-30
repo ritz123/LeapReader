@@ -1,4 +1,5 @@
-import { contextBridge, ipcRenderer } from "electron";
+/* eslint-disable @typescript-eslint/no-var-requires */
+const { contextBridge, ipcRenderer } = require("electron");
 
 function toArrayBuffer(u8) {
   if (u8 == null) return null;

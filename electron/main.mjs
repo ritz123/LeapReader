@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // it returns the asar root when packaged, or the project root in dev.
 // __dirname is kept for PRELOAD since that file lives next to main.mjs.
 const DIST = path.join(app.getAppPath(), "dist");
-const PRELOAD = path.join(__dirname, "preload.mjs");
+const PRELOAD = path.join(__dirname, "preload.cjs");
 
 function windowIconPath() {
   if (app.isPackaged) {
