@@ -3,7 +3,7 @@
  * Serves the Vite build from dist/ on 127.0.0.1, then loads it in a BrowserWindow.
  * Libraries, notes, and cached PDFs persist under userData/leap-reader-data/ (see IPC leap-reader-fs).
  */
-import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell, globalShortcut } from "electron";
 import http from "node:http";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
@@ -283,6 +283,14 @@ if (!gotLock) {
 
     createWindow(LEAP_READER_PORT);
 
+    // Open DevTools with Ctrl+Shift+I (or Cmd+Option+I on macOS) / F12
+    globalShortcut.register("CommandOrControl+Shift+I", () => {
+      mainWindow?.webContents.toggleDevTools();
+    });
+    globalShortcut.register("F12", () => {
+      mainWindow?.webContents.toggleDevTools();
+    });
+
     app.on("activate", async () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         try {
@@ -303,6 +311,7 @@ if (!gotLock) {
   });
 
   app.on("before-quit", () => {
+    globalShortcut.unregisterAll();
     server?.close();
     server = null;
   });
