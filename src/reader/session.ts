@@ -9,22 +9,39 @@ import type {
   PendingNotePlacement,
 } from "./types";
 
-/** Mutable reader session (single bag so small modules can share state without `export let`). */
+/**
+ * Mutable reader session — the single source of truth for runtime state.
+ *
+ * Properties are grouped by concern but kept in one object so small modules
+ * can share state without a web of circular `export let` chains.
+ *
+ * Rule: mutate session properties inside domain modules (pdf-session,
+ * doc-session, zoom-pane, …); never mutate them from UI/chrome modules.
+ */
 export const session = {
-  paneState: { left: emptyPanePdfState(), right: emptyPanePdfState() } as Record<PaneSide, PanePdfState>,
-  noteMode: false,
-  pendingNotePlacement: null as PendingNotePlacement | null,
-  noteDialogEditingId: null as string | null,
-  noteDialogEditContext: null as { pane: PaneSide; page: number } | null,
+  // ── Document state ────────────────────────────────────────────────────────
+  /** Per-pane loaded document state (PDF handle or rendered HTML + metadata). */
+  paneState: {
+    left: emptyPanePdfState(),
+    right: emptyPanePdfState(),
+  } as Record<PaneSide, PanePdfState>,
 
+  // ── Render / layout state ─────────────────────────────────────────────────
   paneTextLayers: new Map<PaneSide, TextLayer | null>(),
+  /** Last measured canvas-wrap size; cleared when layout changes to force re-render. */
   paneLayoutSnapshot: new Map<PaneSide, { w: number; h: number }>(),
   paneWheelNavAt: new Map<PaneSide, number>(),
-
   paneZoomMultiplier: { left: 1, right: 1 } as Record<PaneSide, number>,
-  paneBaseFit: { left: "page" as PaneBaseFit, right: "page" as PaneBaseFit },
-  paneScrollMode: { left: "continuous" as PaneScrollMode, right: "continuous" as PaneScrollMode },
+  paneBaseFit: {
+    left: "page" as PaneBaseFit,
+    right: "page" as PaneBaseFit,
+  },
+  paneScrollMode: {
+    left: "continuous" as PaneScrollMode,
+    right: "continuous" as PaneScrollMode,
+  },
 
+  // ── Continuous-scroll internals ───────────────────────────────────────────
   continuousRev: { left: 0, right: 0 } as Record<PaneSide, number>,
   continuousBuiltRev: { left: -1, right: -1 } as Record<PaneSide, number>,
   continuousObservers: new Map<PaneSide, IntersectionObserver>(),
@@ -33,10 +50,32 @@ export const session = {
   continuousScrollHandler: {} as Partial<Record<PaneSide, () => void>>,
   continuousScrollRaf: null as number | null,
 
+  // ── UI / interaction state ────────────────────────────────────────────────
+  noteMode: false,
+  pendingNotePlacement: null as PendingNotePlacement | null,
+  noteDialogEditingId: null as string | null,
+  noteDialogEditContext: null as { pane: PaneSide; page: number } | null,
   pendingHighlight: null as PendingHighlight | null,
+  /** Anchor element used to position the highlight colour popover. */
   highlightPopoverAnchorEl: null as HTMLElement | null,
   lastSelectionFloatSide: null as PaneSide | null,
   selectionFloatRaf: null as number | null,
 };
 
-export const highlightColorPopover = document.getElementById("highlight-color-popover") as HTMLDivElement | null;
+/**
+ * Lazily resolved highlight-colour popover element.
+ * Kept outside the session object so it is tree-shakeable and does not
+ * pollute the session data model.
+ *
+ * Evaluated on first call so this file is safe to import before DOMReady
+ * (though in practice <script type="module"> always runs after DOMReady).
+ */
+let _highlightColorPopover: HTMLDivElement | null | undefined;
+export function getHighlightColorPopover(): HTMLDivElement | null {
+  if (_highlightColorPopover === undefined) {
+    _highlightColorPopover =
+      document.getElementById("highlight-color-popover") as HTMLDivElement | null;
+  }
+  return _highlightColorPopover;
+}
+

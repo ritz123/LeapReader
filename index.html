@@ -9,7 +9,7 @@
     <meta name="color-scheme" content="light" />
     <meta
       name="description"
-      content="Split-pane PDF reader: leap to another page or document for quick reference like a paper book, while keeping focus on what you read. Libraries, highlights, and notes."
+      content="Split-pane document reader (PDF, Word, text): leap to another page or document for quick reference like a paper book, while keeping focus on what you read. Libraries, highlights, and notes."
     />
     <title>Leap reader</title>
     <link rel="icon" type="image/png" href="/icon.png" />
@@ -25,11 +25,11 @@
       aria-label="Leap reader is starting"
     >
       <div class="app-splash__card">
-        <p class="app-splash__eyebrow">PDF reader</p>
+        <p class="app-splash__eyebrow">Document reader</p>
         <h1 class="app-splash__title">Leap reader</h1>
         <p class="app-splash__tagline">
           Read in one pane and <strong>leap</strong> to another page or document for quick reference—like a paper
-          book—without losing your place. Built for technical PDFs.
+          book—without losing your place. Supports PDF, Word, and plain text.
         </p>
         <ul class="app-splash__features">
           <li>Split left / right panes</li>
@@ -66,10 +66,10 @@
 
     <div id="app-menu-backdrop" class="app-flyout-backdrop" hidden aria-hidden="true"></div>
     <div id="app-menu-panel" class="app-flyout app-menu-flyout" role="menu" hidden aria-label="App menu">
-      <div class="flyout-section flyout-open-pdf">
+      <div class="flyout-section flyout-open-file">
         <span class="flyout-label">Open file</span>
-        <label class="flyout-open-label btn primary" for="file-input-left">Open PDF — Left pane</label>
-        <label class="flyout-open-label btn primary" for="file-input-right">Open PDF — Right pane</label>
+        <label class="flyout-open-label btn primary" for="file-input-left">Open file — Left pane</label>
+        <label class="flyout-open-label btn primary" for="file-input-right">Open file — Right pane</label>
       </div>
       <button type="button" class="flyout-item" id="btn-recent" role="menuitem">Recent</button>
       <button type="button" class="flyout-item" id="btn-libraries" role="menuitem" aria-expanded="false" aria-controls="libraries-panel">
@@ -152,8 +152,8 @@
                 id="pane-tools-left"
                 aria-expanded="false"
                 aria-controls="pane-flyout-left"
-                aria-label="Tools, zoom, and Open PDF"
-                title="Tools &amp; Open PDF"
+                aria-label="Tools, zoom, and Open file"
+                title="Tools &amp; Open file"
               >
                 ⋯
               </button>
@@ -196,10 +196,10 @@
               </div>
               <div class="pane-flyout-group" role="group" aria-label="Left: print">
                 <span class="pane-flyout-label">Print</span>
-                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-with-hl" disabled title="PDF pages plus highlights and note pins">
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-with-hl" disabled title="Print PDF with highlights and note pins (PDF documents only)">
                   With highlights
                 </button>
-                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-without-hl" disabled title="PDF pages only — hides highlights and note pins">
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-left-without-hl" disabled title="Print PDF without highlights and note pins (PDF documents only)">
                   Without highlights
                 </button>
               </div>
@@ -273,8 +273,8 @@
                 id="pane-tools-right"
                 aria-expanded="false"
                 aria-controls="pane-flyout-right"
-                aria-label="Tools, zoom, and Open PDF"
-                title="Tools &amp; Open PDF"
+                aria-label="Tools, zoom, and Open file"
+                title="Tools &amp; Open file"
               >
                 ⋯
               </button>
@@ -317,10 +317,10 @@
               </div>
               <div class="pane-flyout-group" role="group" aria-label="Right: print">
                 <span class="pane-flyout-label">Print</span>
-                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-with-hl" disabled title="PDF pages plus highlights and note pins">
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-with-hl" disabled title="Print PDF with highlights and note pins (PDF documents only)">
                   With highlights
                 </button>
-                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-without-hl" disabled title="PDF pages only — hides highlights and note pins">
+                <button type="button" class="btn btn-compact btn-block" id="btn-print-right-without-hl" disabled title="Print PDF without highlights and note pins (PDF documents only)">
                   Without highlights
                 </button>
               </div>
@@ -370,20 +370,20 @@
           <section class="help-section">
             <h3>Two panes &amp; files</h3>
             <ul>
-              <li><strong>Left</strong> and <strong>Right</strong> are independent: each can show a different PDF or different pages of the same file.</li>
+              <li><strong>Left</strong> and <strong>Right</strong> are independent: each can show a different document or different pages of the same file.</li>
               <li>
-                Tap <strong>⋯</strong> on a pane (bottom-right) for <strong>Open PDF</strong>, zoom, library actions,
-                <strong>Print</strong> (with or without highlights and note pins), copy, highlight, notes, and marks.
+                Tap <strong>⋯</strong> on a pane (bottom-right) for <strong>Open file</strong>, zoom, library actions,
+                <strong>Print</strong> (PDF documents only), copy, highlight, notes, and marks.
               </li>
             </ul>
           </section>
           <section class="help-section">
             <h3>Recent &amp; Libraries</h3>
             <ul>
-              <li><strong>Recent</strong> lists PDFs saved on this device. Use <strong>Left</strong> / <strong>Right</strong> to open one into a pane.</li>
+              <li><strong>Recent</strong> lists documents saved on this device. Use <strong>Left</strong> / <strong>Right</strong> to open one into a pane.</li>
               <li><strong>Libraries</strong> opens collections full screen. Open a document from a library with its primary control or title.</li>
               <li>
-                Every time you open a PDF, it is also added to an <strong>Imported</strong> library (created automatically). You can still use other libraries and remove items from <strong>Imported</strong> if you like.
+                Every time you open a file, it is also added to an <strong>Imported</strong> library (created automatically). You can still use other libraries and remove items from <strong>Imported</strong> if you like.
               </li>
             </ul>
           </section>
@@ -409,15 +409,15 @@
               <li>
                 <strong>Place note</strong> (toggle): tap a spot on the page. A dialog opens showing the document name,
                 pane, and page; type your note and save. Notes are stored on this device and reload when you open the same
-                file again from <strong>Recent</strong> (or after the PDF is saved to Recent when you first open it).
+                file again from <strong>Recent</strong> (or after the file is saved to Recent when you first open it).
               </li>
               <li>
                 Tap a note pin on the page to <strong>edit</strong> or <strong>delete</strong>, or use <strong>Marks</strong>
-                (either pane) to see highlights and notes from <strong>every</strong> saved PDF — then <strong>Go</strong>,
+                (either pane) to see highlights and notes from <strong>every</strong> saved document — then <strong>Go</strong>,
                 <strong>Edit</strong>, or <strong>Delete</strong>.
               </li>
               <li>
-                Marks are <strong>not</strong> written into the PDF file; they are stored in the app (browser IndexedDB, or
+                Marks are <strong>not</strong> written into the file; they are stored in the app (browser IndexedDB, or
                 on desktop in the <code>leap-reader-data</code> folder). Use the menu
                 <strong>Export highlights &amp; notes…</strong> to download a JSON backup you can archive or process elsewhere.
               </li>
@@ -432,7 +432,7 @@
           <section class="help-section help-section--muted">
             <h3>Privacy</h3>
             <p class="help-muted">
-              PDFs, libraries, and marks stay on this browser or device only; nothing is uploaded by Leap reader.
+              Documents, libraries, and marks stay on this browser or device only; nothing is uploaded by Leap reader.
             </p>
           </section>
         </div>
@@ -456,7 +456,7 @@
             <strong>technical documents</strong> much easier.
           </p>
           <p class="help-muted">
-            Split-layout PDF reader with libraries, highlights, and notes — for web, desktop (Electron), and Android
+            Split-layout document reader (PDF, Word, text) with libraries, highlights, and notes — for web, desktop (Electron), and Android
             (Capacitor).
           </p>
           <table class="about-version-table">
@@ -513,7 +513,7 @@
           that pane.
         </p>
         <ul id="recent-list" class="doc-list"></ul>
-        <p id="recent-empty" class="dialog-hint" hidden>No saved documents yet. Open a PDF to add it here.</p>
+        <p id="recent-empty" class="dialog-hint" hidden>No saved documents yet. Open a file to add it here.</p>
         <form method="dialog" class="dialog-foot">
           <button type="submit" class="btn">Close</button>
         </form>

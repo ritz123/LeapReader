@@ -1,5 +1,6 @@
 import * as storage from "./storage";
 import { formatSize, formatWhen } from "./format-display";
+import { showToast } from "./reader/toast";
 
 export type ShelfTargetPane = "left" | "right";
 
@@ -16,22 +17,12 @@ export interface ShelvesDeps {
   areBothPanesEmpty: () => boolean;
   getStorageIdForPane: (pane: ShelfTargetPane) => string | null;
   clearPaneForDeletedStorage: (docId: string) => void | Promise<void>;
-  updateAddToLibraryButton: () => void;
 }
 
 function closeDialog(el: HTMLDialogElement) {
   el.close();
 }
 
-function showShelfToast(message: string) {
-  const el = document.getElementById("toast");
-  if (!el) return;
-  el.textContent = message;
-  el.hidden = false;
-  window.setTimeout(() => {
-    el.hidden = true;
-  }, 2200);
-}
 
 export function initShelvesUi(deps: ShelvesDeps): void {
   let pendingLibraryDocId: string | null = null;
@@ -139,7 +130,7 @@ export function initShelvesUi(deps: ShelvesDeps): void {
             await deps.loadPdfFromBytes(got.data, got.name, meta.id, pane);
           }
           void storage.ensureDocumentInImportedLibrary(meta.id);
-          deps.updateAddToLibraryButton();
+          // emitPaneDocChanged (from loadPdf*) already updates the library button.
           closeDialog(dialogRecent);
         });
       }
@@ -199,9 +190,6 @@ export function initShelvesUi(deps: ShelvesDeps): void {
     }
   }
 
-  document.getElementById("btn-help")?.addEventListener("click", () => {
-    dialogHelp.showModal();
-  });
 
   document.getElementById("btn-recent")?.addEventListener("click", () => {
     deps.closeChromeFlyouts?.();
@@ -214,7 +202,7 @@ export function initShelvesUi(deps: ShelvesDeps): void {
     document.getElementById(addId)?.addEventListener("click", async () => {
       const id = deps.getStorageIdForPane(pane);
       if (!id) {
-        alert("Save this PDF to Recent first (re-open the file if Add to library stays disabled).");
+        alert("Save this document to Recent first (re-open the file if Add to library stays disabled).");
         return;
       }
       const meta = await storage.getDocumentMeta(id);
@@ -223,7 +211,7 @@ export function initShelvesUi(deps: ShelvesDeps): void {
     document.getElementById(remId)?.addEventListener("click", async () => {
       const id = deps.getStorageIdForPane(pane);
       if (!id) {
-        alert("Save this PDF to Recent first (re-open the file if this action stays disabled).");
+        alert("Save this document to Recent first (re-open the file if this action stays disabled).");
         return;
       }
       const meta = await storage.getDocumentMeta(id);
@@ -243,7 +231,7 @@ export function initShelvesUi(deps: ShelvesDeps): void {
       return;
     }
     pendingLibraryDocId = null;
-    showShelfToast("Added to library");
+    showToast("Added to library");
     closeDialog(dialogAddLib);
   });
 
@@ -260,7 +248,7 @@ export function initShelvesUi(deps: ShelvesDeps): void {
       await storage.removeDocumentFromLibrary(cb.value, docId);
       n += 1;
     }
-    showShelfToast(n === 1 ? "Removed from 1 library" : `Removed from ${n} libraries`);
+    showToast(n === 1 ? "Removed from 1 library" : `Removed from ${n} libraries`);
     removeDocIdForDialog = "";
     closeDialog(dialogRemoveLib);
   });

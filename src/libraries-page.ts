@@ -55,7 +55,7 @@ const btnRemoveConfirm = document.getElementById("libs-btn-remove-confirm") as H
 async function openInReader(docId: string, pane: "left" | "right" | "auto") {
   const exists = await storage.getDocumentData(docId);
   if (!exists) {
-    alert("This file is no longer on this device. Remove it from the library or re-add the PDF from Recent.");
+    alert("This file is no longer on this device. Remove it from the library or re-open the file and add it again.");
     void renderLibrariesPage();
     return;
   }

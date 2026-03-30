@@ -38,7 +38,7 @@ function clearPrintPrepLayout(): void {
  */
 export async function printPane(side: PaneSide, includeHighlights: boolean): Promise<void> {
   if (!session.paneState[side].doc) {
-    showToast("Open a PDF in this pane to print");
+    showToast("Open a PDF document in this pane to print");
     return;
   }
 

@@ -1,13 +1,21 @@
+/**
+ * Open/close helpers for the app menu flyout, per-pane tool flyouts, and the
+ * libraries embed panel.
+ *
+ * DOM references are resolved inside each function (not at module load) so
+ * this module is safe to import before the DOM is ready and does not hold
+ * stale references if elements are ever re-stamped.
+ */
+
 import type { PaneSide } from "./types";
 
-const appMenuBtn = document.getElementById("btn-app-menu") as HTMLButtonElement | null;
-const appMenuPanel = document.getElementById("app-menu-panel") as HTMLDivElement | null;
-const appMenuBackdrop = document.getElementById("app-menu-backdrop") as HTMLDivElement | null;
-
 export function setAppMenuOpen(open: boolean): void {
-  appMenuBtn?.setAttribute("aria-expanded", String(open));
-  if (appMenuPanel) appMenuPanel.hidden = !open;
-  if (appMenuBackdrop) appMenuBackdrop.hidden = !open;
+  const btn = document.getElementById("btn-app-menu");
+  const panel = document.getElementById("app-menu-panel") as HTMLElement | null;
+  const backdrop = document.getElementById("app-menu-backdrop") as HTMLElement | null;
+  btn?.setAttribute("aria-expanded", String(open));
+  if (panel) panel.hidden = !open;
+  if (backdrop) backdrop.hidden = !open;
 }
 
 export function closeAllPaneFlyouts(): void {
@@ -29,23 +37,24 @@ export function togglePaneToolsFlyout(side: PaneSide): void {
   }
 }
 
-const librariesPanel = document.getElementById("libraries-panel");
-const librariesIframe = document.getElementById("libraries-iframe") as HTMLIFrameElement | null;
-const btnLibraries = document.getElementById("btn-libraries");
-
 export function openLibrariesEmbed(): void {
-  librariesPanel?.removeAttribute("hidden");
-  librariesPanel?.setAttribute("aria-hidden", "false");
-  btnLibraries?.setAttribute("aria-expanded", "true");
+  const panel = document.getElementById("libraries-panel");
+  const iframe = document.getElementById("libraries-iframe") as HTMLIFrameElement | null;
+  const btn = document.getElementById("btn-libraries");
+  panel?.removeAttribute("hidden");
+  panel?.setAttribute("aria-hidden", "false");
+  btn?.setAttribute("aria-expanded", "true");
   document.body.classList.add("libraries-embed-active");
-  librariesIframe?.focus({ preventScroll: true });
+  iframe?.focus({ preventScroll: true });
 }
 
 export function closeLibrariesEmbed(): void {
   if (!document.body.classList.contains("libraries-embed-active")) return;
-  librariesPanel?.setAttribute("hidden", "");
-  librariesPanel?.setAttribute("aria-hidden", "true");
-  btnLibraries?.setAttribute("aria-expanded", "false");
+  const panel = document.getElementById("libraries-panel");
+  const btn = document.getElementById("btn-libraries");
+  panel?.setAttribute("hidden", "");
+  panel?.setAttribute("aria-hidden", "true");
+  btn?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("libraries-embed-active");
-  btnLibraries?.focus();
+  btn?.focus();
 }

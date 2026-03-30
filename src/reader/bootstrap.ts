@@ -8,10 +8,10 @@ import * as storage from "../storage";
 import { initShelvesUi } from "../shelves-ui";
 import { setOpenNoteForEditHandler } from "./annotations-paint";
 import {
+  initChromeListeners,
   showToast,
   syncNoteModeButton,
   syncPaneDocLabel,
-  updateAddToLibraryButton,
   updateAnnotationChrome,
   updateSelectionButtons,
 } from "./chrome-toolbar";
@@ -60,15 +60,22 @@ import {
 } from "./pdf-session";
 import { registerPdfRender, renderBothPanes } from "./render-registry";
 import { renderBothPanesImpl, renderPaneImpl } from "./pdf-render-pane";
+import { initZoomListeners } from "./zoom-pane";
 import { dismissSplashWhenReady } from "./splash";
 import { checkForUpdate } from "./update-check";
 import { activePaneForSelection, hideSelectionFloat } from "./selection-geometry";
 import { updateSelectionFloatBar } from "./selection-float-bar";
-import { highlightColorPopover, session } from "./session";
+import { getHighlightColorPopover, session } from "./session";
 import type { PaneSide } from "./types";
 import { adjustPaneZoom, setPaneBaseFit, syncZoomUi } from "./zoom-pane";
 
 export function bootstrapReader(): void {
+  // Register event-bus subscribers so chrome updates fire automatically
+  // on every pane state change (Open/Closed: add new concerns here, not
+  // in the state-mutation modules).
+  initChromeListeners();
+  initZoomListeners();
+
   registerPdfRender(renderPaneImpl, renderBothPanesImpl);
   setOpenNoteForEditHandler((id) => {
     void openEditNoteDialog(id);
@@ -199,7 +206,7 @@ export function bootstrapReader(): void {
         await loadPdfBuffer(got.data, got.name, docId, pane);
       }
       void storage.ensureDocumentInImportedLibrary(docId);
-      updateAddToLibraryButton();
+      // emitPaneDocChanged (fired inside loadPdf*) already updates the library button.
       await renderBothPanes();
     })();
   });
@@ -214,7 +221,6 @@ export function bootstrapReader(): void {
     areBothPanesEmpty: bothPanesEmpty,
     getStorageIdForPane: (pane) => session.paneState[pane].storageId,
     clearPaneForDeletedStorage,
-    updateAddToLibraryButton,
   });
 
   for (const side of ["left", "right"] as const) {
@@ -365,7 +371,7 @@ export function bootstrapReader(): void {
     else openNoteAtSelection(side);
   });
 
-  highlightColorPopover?.querySelectorAll<HTMLButtonElement>(".highlight-swatch").forEach((btn) => {
+  getHighlightColorPopover()?.querySelectorAll<HTMLButtonElement>(".highlight-swatch").forEach((btn: HTMLButtonElement) => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.hlColor;
       if (id && isHighlightColorId(id)) void commitHighlightWithColor(id);
@@ -378,10 +384,10 @@ export function bootstrapReader(): void {
   document.addEventListener(
     "mousedown",
     (e) => {
-      if (highlightColorPopover?.hidden) return;
+      if (getHighlightColorPopover()?.hidden) return;
       const el = e.target as HTMLElement | null;
       if (!el) return;
-      if (highlightColorPopover?.contains(el)) return;
+      if (getHighlightColorPopover()?.contains(el)) return;
       if (el.closest('[id^="btn-highlight-"]')) return;
       if (el.closest("#selection-float")) return;
       if (el.closest(".pane-flyout")) return;
@@ -393,7 +399,7 @@ export function bootstrapReader(): void {
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (highlightColorPopover?.hidden) return;
+    if (getHighlightColorPopover()?.hidden) return;
     e.preventDefault();
     closeHighlightColorPopover();
   });
@@ -437,7 +443,7 @@ export function bootstrapReader(): void {
   });
 
   window.addEventListener("resize", () => {
-    if (!highlightColorPopover?.hidden && session.highlightPopoverAnchorEl) {
+    if (!getHighlightColorPopover()?.hidden && session.highlightPopoverAnchorEl) {
       positionHighlightColorPopover(session.highlightPopoverAnchorEl);
     }
     updateSelectionFloatBar();

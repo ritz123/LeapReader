@@ -1,5 +1,6 @@
 import { ZOOM_MAX, ZOOM_MIN } from "./config";
 import { bumpContinuousRev } from "./continuous-helpers";
+import { onPaneDocChanged } from "./pane-events";
 import { renderPane } from "./render-registry";
 import { session } from "./session";
 import type { PaneBaseFit, PaneSide } from "./types";
@@ -37,6 +38,7 @@ export function adjustPaneZoom(side: PaneSide, factor: number): void {
   session.paneZoomMultiplier[side] = clampPaneZoom(session.paneZoomMultiplier[side] * factor);
   session.paneLayoutSnapshot.delete(side);
   if (session.paneScrollMode[side] === "continuous") bumpContinuousRev(side);
+  syncZoomUi(side);
   void renderPane(side);
 }
 
@@ -47,4 +49,12 @@ export function setPaneBaseFit(side: PaneSide, fit: PaneBaseFit): void {
   session.paneLayoutSnapshot.delete(side);
   if (session.paneScrollMode[side] === "continuous") bumpContinuousRev(side);
   void renderPane(side);
+}
+
+/**
+ * Register zoom-UI subscriptions on the pane event bus.
+ * Call once from bootstrapReader().
+ */
+export function initZoomListeners(): void {
+  onPaneDocChanged((side) => syncZoomUi(side));
 }

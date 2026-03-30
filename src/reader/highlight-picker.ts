@@ -13,7 +13,7 @@ import {
   viewportAndPageFromSelection,
 } from "./selection-geometry";
 import { updateSelectionFloatBar } from "./selection-float-bar";
-import { highlightColorPopover, session } from "./session";
+import { getHighlightColorPopover, session } from "./session";
 import type { PaneSide } from "./types";
 
 export function buildPendingHighlightFromSelection(side: PaneSide): boolean {
@@ -51,34 +51,37 @@ export async function quickHighlightLastColor(side: PaneSide): Promise<void> {
 export function closeHighlightColorPopover(): void {
   session.pendingHighlight = null;
   session.highlightPopoverAnchorEl = null;
-  if (highlightColorPopover) {
-    highlightColorPopover.hidden = true;
-    highlightColorPopover.style.left = "";
-    highlightColorPopover.style.top = "";
+  const pop = getHighlightColorPopover();
+  if (pop) {
+    pop.hidden = true;
+    pop.style.left = "";
+    pop.style.top = "";
   }
   updateSelectionFloatBar();
 }
 
 export function positionHighlightColorPopover(anchor: HTMLElement): void {
-  if (!highlightColorPopover) return;
+  const pop = getHighlightColorPopover();
+  if (!pop) return;
   const r = anchor.getBoundingClientRect();
   const pad = 8;
-  const pw = highlightColorPopover.offsetWidth || 220;
-  const ph = highlightColorPopover.offsetHeight || 120;
+  const pw = pop.offsetWidth || 220;
+  const ph = pop.offsetHeight || 120;
   let left = r.left + r.width / 2 - pw / 2;
   let top = r.bottom + pad;
   left = Math.max(pad, Math.min(left, window.innerWidth - pw - pad));
   if (top + ph > window.innerHeight - pad) {
     top = Math.max(pad, r.top - ph - pad);
   }
-  highlightColorPopover.style.left = `${Math.round(left)}px`;
-  highlightColorPopover.style.top = `${Math.round(top)}px`;
+  pop.style.left = `${Math.round(left)}px`;
+  pop.style.top = `${Math.round(top)}px`;
 }
 
 export function openHighlightColorChooser(side: PaneSide, anchorEl: HTMLElement | null = null): void {
   if (!buildPendingHighlightFromSelection(side)) return;
-  if (!highlightColorPopover) return;
-  highlightColorPopover.hidden = false;
+  const pop = getHighlightColorPopover();
+  if (!pop) return;
+  pop.hidden = false;
   const anchor =
     anchorEl ??
     (document.getElementById(`pane-tools-${side}`) as HTMLElement | null) ??
@@ -93,13 +96,13 @@ export function openHighlightColorChooser(side: PaneSide, anchorEl: HTMLElement 
         const last = localStorage.getItem(LAST_HIGHLIGHT_COLOR_KEY);
         if (last && isHighlightColorId(last)) {
           focusSwatch =
-            highlightColorPopover?.querySelector<HTMLButtonElement>(`[data-hl-color="${last}"]`) ??
+            getHighlightColorPopover()?.querySelector<HTMLButtonElement>(`[data-hl-color="${last}"]`) ??
             null;
         }
       } catch {
         /* ignore */
       }
-      (focusSwatch ?? highlightColorPopover?.querySelector<HTMLButtonElement>(".highlight-swatch"))?.focus();
+      (focusSwatch ?? getHighlightColorPopover()?.querySelector<HTMLButtonElement>(".highlight-swatch"))?.focus();
     });
   } else {
     hideSelectionFloat();

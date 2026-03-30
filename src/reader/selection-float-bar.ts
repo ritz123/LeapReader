@@ -1,10 +1,10 @@
 import { getSelectionInViewport, activePaneForSelection, viewportAndPageFromSelection } from "./selection-geometry";
-import { highlightColorPopover, session } from "./session";
+import { getHighlightColorPopover, session } from "./session";
 
 export function updateSelectionFloatBar(): void {
   const el = document.getElementById("selection-float") as HTMLDivElement | null;
   if (!el) return;
-  if (session.noteMode || (highlightColorPopover && !highlightColorPopover.hidden)) {
+  if (session.noteMode || !getHighlightColorPopover()?.hidden) {
     el.hidden = true;
     session.lastSelectionFloatSide = null;
     return;

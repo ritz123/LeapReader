@@ -11,12 +11,24 @@ export function truncateTitle(s: string, max: number): string {
   return `${s.slice(0, max - 1)}…`;
 }
 
+/**
+ * Per-side pane element cache.
+ * The DOM structure for each pane is stamped once and never re-created, so
+ * caching the element bundle is always safe and eliminates repeated
+ * querySelector calls on every chrome-update cycle.
+ */
+const paneCache = new Map<PaneSide, PaneElements>();
+
 export function getPane(side: PaneSide): PaneElements {
+  const cached = paneCache.get(side);
+  if (cached) return cached;
+
   const root = document.querySelector<HTMLElement>(`.pane[data-side="${side}"]`)!;
   const singlePageShell = root.querySelector<HTMLElement>(".single-page-shell")!;
   const continuousStack = root.querySelector<HTMLElement>(".continuous-stack")!;
   const pageViewport = singlePageShell.querySelector<HTMLElement>(".page-viewport")!;
-  return {
+
+  const elements: PaneElements = {
     root,
     singlePageShell,
     continuousStack,
@@ -34,4 +46,7 @@ export function getPane(side: PaneSide): PaneElements {
     docNameEl: root.querySelector<HTMLElement>(".pane-doc-name")!,
     docView: root.querySelector<HTMLElement>(".doc-view")!,
   };
+
+  paneCache.set(side, elements);
+  return elements;
 }

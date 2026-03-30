@@ -1,10 +1,9 @@
-import { updatePaneChrome, updateHeaderSummary } from "./chrome-toolbar";
 import { getPane } from "./dom";
 import { emptyPanePdfState } from "./pane-model";
+import { emitBothPanesDocChanged, emitPaneDocChanged } from "./pane-events";
 import { teardownContinuousUi } from "./pdf-continuous";
 import { session } from "./session";
 import type { DocType, PaneSide } from "./types";
-import { syncZoomUi } from "./zoom-pane";
 
 /** Returns the DocType for a filename, or null if it is a PDF. Unknown/no extension → "txt". */
 export function docTypeFromName(name: string): DocType | null {
@@ -34,7 +33,7 @@ async function toHtml(buf: ArrayBuffer, type: DocType): Promise<string> {
       .join("");
     return `<pre class="doc-view__text">${lines}</pre>`;
   }
-  // docx and doc: use mammoth (lazy-loaded to keep the initial bundle small)
+  // docx / doc: use mammoth (lazy-loaded to keep the initial bundle small)
   const mammoth = (await import("mammoth")).default;
   const result = await mammoth.convertToHtml({ arrayBuffer: buf });
   return result.value;
@@ -50,9 +49,12 @@ export async function loadDocBufferInitialBoth(
     loadDocBuffer(buf.slice(0), name, storageId, "left"),
     loadDocBuffer(buf.slice(0), name, storageId, "right"),
   ]);
+  // loadDocBuffer already emits per-side; emit both-changed so any global
+  // subscriber that needs a single signal gets one.
+  emitBothPanesDocChanged();
 }
 
-/** Load a Word / text document into a pane. */
+/** Load a Word / text document into a single pane. */
 export async function loadDocBuffer(
   buf: ArrayBuffer,
   name: string,
@@ -62,7 +64,7 @@ export async function loadDocBuffer(
   const type = docTypeFromName(name);
   if (!type) throw new Error(`Unsupported document type: ${name}`);
 
-  // Tear down any existing PDF in this pane.
+  // Tear down any existing document in this pane.
   session.paneTextLayers.get(side)?.cancel();
   session.paneTextLayers.set(side, null);
   const prev = session.paneState[side].doc;
@@ -86,12 +88,11 @@ export async function loadDocBuffer(
   pe.docView.dataset.docType = type;
   pe.docView.innerHTML = html;
 
-  updatePaneChrome(side);
-  updateHeaderSummary();
-  syncZoomUi(side);
+  // Single emit replaces: updatePaneChrome + updateHeaderSummary + syncZoomUi
+  emitPaneDocChanged(side);
 }
 
-/** Hide the doc-view and restore the pane to its empty PDF-ready state. */
+/** Hide the doc-view and reset the pane to its initial empty state. */
 export function clearDocView(side: PaneSide): void {
   const pe = getPane(side);
   pe.docView.hidden = true;

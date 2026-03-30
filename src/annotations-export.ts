@@ -28,7 +28,7 @@ export async function buildAnnotationsExportPayload(): Promise<AnnotationsExport
   }
   const documents: AnnotationsExportDocument[] = [...byDoc.entries()].map(([documentId, annotations]) => ({
     documentId,
-    documentName: metaById.get(documentId)?.name ?? "(PDF not in Recent — name unknown)",
+    documentName: metaById.get(documentId)?.name ?? "(document not in Recent — name unknown)",
     annotations: [...annotations].sort((x, y) => x.createdAt - y.createdAt || x.page - y.page),
   }));
   documents.sort((a, b) =>

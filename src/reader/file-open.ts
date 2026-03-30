@@ -1,6 +1,6 @@
 import * as storage from "../storage";
-import { updateAddToLibraryButton } from "./chrome-toolbar";
 import { docTypeFromName, loadDocBuffer, loadDocBufferInitialBoth } from "./doc-session";
+import { emitPaneDocChanged, emitBothPanesDocChanged } from "./pane-events";
 import { bothPanesEmpty } from "./pane-queries";
 import { loadPdfBuffer, loadPdfBufferInitialBoth } from "./pdf-session";
 import { renderBothPanes } from "./render-registry";
@@ -48,12 +48,14 @@ export function wireFileInput(inputId: string, side: PaneSide): void {
             session.paneState[s].storageId = id;
             session.paneState[s].annotationDocId = id;
           }
+          // Re-emit so library buttons reflect the now-assigned storageId.
+          emitBothPanesDocChanged();
         } else {
           session.paneState[side].storageId = id;
           session.paneState[side].annotationDocId = id;
+          emitPaneDocChanged(side);
         }
         void storage.ensureDocumentInImportedLibrary(id);
-        updateAddToLibraryButton();
       }
 
       // PDFs need an explicit render pass; doc views render during load.

@@ -1,16 +1,11 @@
 import * as pdfjsLib from "pdfjs-dist";
-import {
-  updateAddToLibraryButton,
-  updateHeaderSummary,
-  updatePaneChrome,
-} from "./chrome-toolbar";
 import { getPane, waitLayout } from "./dom";
 import { emptyPanePdfState } from "./pane-model";
+import { emitBothPanesDocChanged, emitPaneDocChanged } from "./pane-events";
 import { teardownContinuousUi } from "./pdf-continuous";
 import { renderBothPanes, renderPane } from "./render-registry";
 import { session } from "./session";
 import type { PaneSide } from "./types";
-import { syncZoomUi } from "./zoom-pane";
 
 export async function clearPane(side: PaneSide): Promise<void> {
   session.paneTextLayers.get(side)?.cancel();
@@ -18,24 +13,20 @@ export async function clearPane(side: PaneSide): Promise<void> {
   const p = getPane(side);
   p.textLayer.replaceChildren();
   const prev = session.paneState[side].doc;
-  if (prev) {
-    await prev.destroy();
-  }
+  if (prev) await prev.destroy();
   session.paneState[side] = emptyPanePdfState();
   session.paneZoomMultiplier[side] = 1;
   session.paneBaseFit[side] = "page";
   session.paneScrollMode[side] = "continuous";
   teardownContinuousUi(side);
   const pe = getPane(side);
-  // Ensure doc-view is hidden and canvas-scroll is restored.
   pe.docView.hidden = true;
   pe.docView.innerHTML = "";
   pe.canvasScroll.hidden = false;
   pe.singlePageShell.hidden = false;
   pe.continuousStack.hidden = true;
-  updatePaneChrome(side);
-  updateHeaderSummary();
-  syncZoomUi(side);
+  // Single emit replaces: updatePaneChrome + updateHeaderSummary + syncZoomUi
+  emitPaneDocChanged(side);
 }
 
 export async function clearPaneForDeletedStorage(docId: string): Promise<void> {
@@ -44,7 +35,6 @@ export async function clearPaneForDeletedStorage(docId: string): Promise<void> {
       await clearPane(side);
     }
   }
-  updateAddToLibraryButton();
 }
 
 export async function loadPdfBufferInitialBoth(
@@ -59,10 +49,7 @@ export async function loadPdfBufferInitialBoth(
 
   const b1 = data.slice(0);
   const b2 = data.slice(0);
-  const opts = {
-    isEvalSupported: false,
-    useSystemFonts: true,
-  } as const;
+  const opts = { isEvalSupported: false, useSystemFonts: true } as const;
   const [docL, docR] = await Promise.all([
     pdfjsLib.getDocument({ data: new Uint8Array(b1), ...opts }).promise,
     pdfjsLib.getDocument({ data: new Uint8Array(b2), ...opts }).promise,
@@ -72,12 +59,10 @@ export async function loadPdfBufferInitialBoth(
   session.paneState.right = { doc: docR, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
   getPane("left").pageInput.value = "1";
   getPane("right").pageInput.value = "1";
-  updatePaneChrome("left");
-  updatePaneChrome("right");
-  updateHeaderSummary();
+  // Single emit for both panes replaces four explicit chrome-update calls.
+  emitBothPanesDocChanged();
   await waitLayout();
   await renderBothPanes();
-  updateAddToLibraryButton();
 }
 
 export async function loadPdfBuffer(
@@ -92,9 +77,7 @@ export async function loadPdfBuffer(
   getPane(side).textLayer.replaceChildren();
 
   const prev = session.paneState[side].doc;
-  if (prev) {
-    await prev.destroy();
-  }
+  if (prev) await prev.destroy();
 
   session.paneScrollMode[side] = "continuous";
   session.paneBaseFit[side] = "page";
@@ -104,16 +87,17 @@ export async function loadPdfBuffer(
   pe0.continuousStack.hidden = true;
 
   const dataByteLength = data.byteLength;
-  const task = pdfjsLib.getDocument({
+  const doc = await pdfjsLib.getDocument({
     data: new Uint8Array(data),
     isEvalSupported: false,
     useSystemFonts: true,
   }).promise;
-  const doc = await task;
+
   // Ensure doc-view is hidden when loading a PDF.
   const pe = getPane(side);
   pe.docView.hidden = true;
   pe.docView.innerHTML = "";
+  delete pe.docView.dataset.docType;
   pe.canvasScroll.hidden = false;
 
   session.paneState[side] = {
@@ -126,9 +110,8 @@ export async function loadPdfBuffer(
   };
   session.paneZoomMultiplier[side] = 1;
   getPane(side).pageInput.value = "1";
-  updatePaneChrome(side);
-  updateHeaderSummary();
+  // Single emit replaces: updatePaneChrome + updateHeaderSummary + syncZoomUi + updateAddToLibraryButton
+  emitPaneDocChanged(side);
   await waitLayout();
   await renderPane(side);
-  updateAddToLibraryButton();
 }

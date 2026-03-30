@@ -14,6 +14,21 @@
   box-sizing: border-box;
 }
 
+/*
+ * Global [hidden] enforcement.
+ * Browser default is `[hidden] { display: none }` with specificity (0,0,1).
+ * Any author rule that sets `display: flex/grid/block` on the same element
+ * wins by specificity and silently breaks the hidden attribute.
+ * This rule has specificity (0,1,0) — higher than the browser default and
+ * sufficient to beat any plain class selector — so hidden always wins.
+ *
+ * Exception: elements that legitimately override hidden for print or
+ * JS-driven visibility should use `element.hidden = false` rather than CSS.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -264,9 +279,7 @@ canvas.hiddenCanvasElement {
   text-align: center;
 }
 
-.toast[hidden] {
-  display: none;
-}
+
 
 body.note-mode .page-viewport {
   cursor: crosshair;
@@ -346,9 +359,7 @@ body.note-mode .text-layer {
   background: rgba(0, 0, 0, 0.2);
 }
 
-.app-flyout-backdrop[hidden] {
-  display: none !important;
-}
+
 
 .app-flyout {
   position: fixed;
@@ -366,9 +377,7 @@ body.note-mode .text-layer {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
 }
 
-.app-flyout[hidden] {
-  display: none !important;
-}
+
 
 .flyout-item {
   display: block;
@@ -681,9 +690,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   pointer-events: auto;
 }
 
-.pane-flyout-backdrop[hidden] {
-  display: none !important;
-}
+
 
 .pane-flyout {
   position: absolute;
@@ -701,9 +708,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   pointer-events: auto;
 }
 
-.pane-flyout[hidden] {
-  display: none !important;
-}
+
 
 .pane-flyout-inner {
   display: flex;
@@ -879,9 +884,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   scrollbar-gutter: stable;
 }
 
-.canvas-scroll[hidden] {
-  display: none !important;
-}
+
 
 .single-page-shell {
   flex: 1 1 0;
@@ -997,9 +1000,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   pointer-events: auto;
 }
 
-.selection-float[hidden] {
-  display: none !important;
-}
+
 
 .highlight-color-popover {
   position: fixed;
@@ -1127,9 +1128,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   z-index: 5;
 }
 
-.placeholder[hidden] {
-  display: none !important;
-}
+
 
 .placeholder-hint {
   margin: 0;
@@ -1152,7 +1151,7 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   font-size: 0.95rem;
 }
 
-.flyout-open-pdf {
+.flyout-open-file {
   padding-bottom: 0.5rem;
   margin-bottom: 0.25rem;
   border-bottom: 1px solid var(--border);
@@ -1712,9 +1711,7 @@ body.libraries-standalone {
   flex-direction: column;
 }
 
-.libraries-embed-panel[hidden] {
-  display: none !important;
-}
+
 
 .libraries-embed-iframe {
   flex: 1;

@@ -1,9 +1,5 @@
 import { highlightBackgroundForStored } from "../highlight-colors";
 import * as storage from "../storage";
-import {
-  updateAddToLibraryButton,
-  updateHeaderSummary,
-} from "./chrome-toolbar";
 import { getPane, truncateTitle } from "./dom";
 import {
   getActivePaneTab,
@@ -41,8 +37,7 @@ export async function goToAnnotationMark(a: storage.AnnotationRecord): Promise<b
     if (session.paneScrollMode[a.pane] === "continuous") {
       scrollContinuousToPage(a.pane, a.page);
     }
-    updateAddToLibraryButton();
-    updateHeaderSummary();
+    // loadPdfBuffer already emits emitPaneDocChanged which updates all chrome.
     return true;
   } catch (e) {
     console.error(e);
@@ -79,7 +74,7 @@ export async function refreshMarksDialog(): Promise<void> {
       const namePart = rest.split(":")[0] ?? "";
       return truncateTitle(namePart || "Unsaved", 36);
     }
-    return "Unknown PDF";
+    return "Unknown document";
   }
   empty.hidden = items.length > 0;
   const sorted = items
