@@ -14,8 +14,16 @@ if [[ ! -d node_modules ]]; then
   npm install
 fi
 
+# Ensure packaging icons exist. Linux Mint and other desktop environments require 
+# a high-res PNG for the application launcher icon.
+mkdir -p build/icons
 if [[ ! -f build/icons/icon.png ]]; then
-  echo "Warning: build/icons/icon.png missing — window / package icons may be wrong." >&2
+  if [[ -f public/icon.png ]]; then
+    echo "Setting up packaging icon from public/icon.png…"
+    cp public/icon.png build/icons/icon.png
+  else
+    echo "Warning: No icon source found. The application launcher icon may be missing." >&2
+  fi
 fi
 
 echo "Building web app (tsc + vite)…"
