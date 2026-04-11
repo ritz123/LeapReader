@@ -47,7 +47,10 @@ export function isNewer(local: string, remote: string): boolean {
 
 async function fetchLatestRelease(): Promise<UpdateInfo> {
   try {
-    const res = await fetch(API_URL, { headers: { Accept: "application/vnd.github+json" } });
+    const res = await fetch(API_URL, {
+      headers: { Accept: "application/vnd.github+json" },
+      cache: "no-cache",
+    });
     if (!res.ok) {
       return { version: "", url: API_URL, isUpToDate: true, error: `HTTP ${res.status}` };
     }
