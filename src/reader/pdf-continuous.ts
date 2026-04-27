@@ -1,8 +1,11 @@
 import { TextLayer } from "pdfjs-dist";
+import type { PDFPageProxy, PageViewport } from "pdfjs-dist";
+import * as storage from "../storage";
 import { paintAnnotations } from "./annotations-paint";
 import { updateNavDisabled } from "./chrome-toolbar";
 import { continuousLayerKey } from "./continuous-helpers";
-import { getPane, waitLayout } from "./dom";
+import { getPane, waitLayoutIfPaneSizeChanged } from "./dom";
+import { paintPdfInnerLinks } from "./pdf-internal-links";
 import { getPdfFitBoxForPane } from "./page-frame";
 import { bindTextLayerScale, getScaledPageViewport } from "./pdf-viewport";
 import { session } from "./session";
@@ -124,7 +127,59 @@ function setupContinuousObserver(side: PaneSide): void {
   session.continuousObservers.set(side, io);
 }
 
-async function doRenderContinuousSlotContent(side: PaneSide, slot: HTMLElement): Promise<void> {
+async function runContinuousSlotInteractiveLayers(
+  side: PaneSide,
+  _pageNum: number,
+  page: PDFPageProxy,
+  vp: PageViewport,
+  key: string,
+  textLayerEl: HTMLElement,
+  vpEl: HTMLElement,
+  revAtStart: number
+): Promise<void> {
+  if (session.continuousRev[side] !== revAtStart) return;
+
+  let pdfAnnos: Array<Record<string, unknown>> = [];
+  try {
+    const [textContent, pdfAnnosResult] = await Promise.all([
+      page.getTextContent(),
+      page.getAnnotations({ intent: "display" }) as Promise<Array<Record<string, unknown>>>,
+    ]);
+    pdfAnnos = pdfAnnosResult;
+    if (session.continuousRev[side] !== revAtStart) return;
+
+    bindTextLayerScale(textLayerEl, vp);
+    const tl = new TextLayer({
+      textContentSource: textContent,
+      container: textLayerEl,
+      viewport: vp,
+    });
+    session.continuousTextLayers.set(key, tl);
+    await tl.render();
+  } catch (err) {
+    if (session.continuousRev[side] !== revAtStart) return;
+    console.warn("Text layer failed (continuous)", err);
+    session.continuousTextLayers.set(key, null);
+    return;
+  }
+
+  if (session.continuousRev[side] !== revAtStart) return;
+
+  const linkLayer = vpEl.querySelector<HTMLElement>(".pdf-link-layer");
+  if (linkLayer) {
+    try {
+      await paintPdfInnerLinks(side, page, vp, linkLayer, pdfAnnos);
+    } catch (err) {
+      console.warn("PDF link layer failed (continuous)", err);
+    }
+  }
+}
+
+async function doRenderContinuousSlotContent(
+  side: PaneSide,
+  slot: HTMLElement,
+  syncInteractiveLayers = false
+): Promise<void> {
   const doc = session.paneState[side].doc;
   if (!doc) return;
   const pageNum = parseInt(slot.dataset.pdfPage ?? "1", 10);
@@ -141,7 +196,7 @@ async function doRenderContinuousSlotContent(side: PaneSide, slot: HTMLElement):
   session.continuousTextLayers.delete(key);
 
   const p = getPane(side);
-  await waitLayout();
+  await waitLayoutIfPaneSizeChanged(side, p.canvasWrap);
   if (session.continuousRev[side] !== revAtStart) return;
 
   const { maxW, maxH } = getPdfFitBoxForPane(side, p.canvasWrap);
@@ -156,41 +211,41 @@ async function doRenderContinuousSlotContent(side: PaneSide, slot: HTMLElement):
   canvas.width = Math.floor(vp.width);
   canvas.height = Math.floor(vp.height);
 
+  textLayerEl.replaceChildren();
+  vpEl.querySelector(".pdf-link-layer")?.replaceChildren();
+
+  const annId = session.paneState[side].annotationDocId;
+  const annListPromise = annId ? storage.listAnnotations(annId) : Promise.resolve([]);
+
   try {
-    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const [, userAnnItems] = await Promise.all([
+      page.render({ canvasContext: ctx, viewport: vp }).promise,
+      annListPromise,
+    ]);
+
+    if (session.continuousRev[side] !== revAtStart) return;
+
+    try {
+      await paintAnnotations(side, pageNum, userAnnItems);
+    } catch (err) {
+      console.warn("Annotations paint failed (continuous)", err);
+    }
   } catch (err) {
     console.error("Continuous page render failed", err);
     return;
   }
 
   if (session.continuousRev[side] !== revAtStart) return;
-
-  textLayerEl.replaceChildren();
-  try {
-    const textContent = await page.getTextContent();
-    bindTextLayerScale(textLayerEl, vp);
-    const tl = new TextLayer({
-      textContentSource: textContent,
-      container: textLayerEl,
-      viewport: vp,
-    });
-    session.continuousTextLayers.set(key, tl);
-    await tl.render();
-  } catch (err) {
-    console.warn("Text layer failed (continuous)", err);
-    session.continuousTextLayers.set(key, null);
-  }
-
-  if (session.continuousRev[side] !== revAtStart) return;
-
-  try {
-    await paintAnnotations(side, pageNum);
-  } catch (err) {
-    console.warn("Annotations paint failed (continuous)", err);
-  }
-
-  if (session.continuousRev[side] !== revAtStart) return;
   slot.dataset.renderedRev = String(session.continuousRev[side]);
+
+  const runInteractive = (): Promise<void> =>
+    runContinuousSlotInteractiveLayers(side, pageNum, page, vp, key, textLayerEl, vpEl, revAtStart);
+
+  if (syncInteractiveLayers) {
+    await runInteractive();
+  } else {
+    requestAnimationFrame(() => void runInteractive());
+  }
 }
 
 /**
@@ -203,7 +258,7 @@ export async function renderAllContinuousSlotsForPrint(side: PaneSide): Promise<
   const slots = getPane(side).continuousStack.querySelectorAll<HTMLElement>(".continuous-page-slot");
   for (const slot of slots) {
     delete slot.dataset.renderedRev;
-    await doRenderContinuousSlotContent(side, slot);
+    await doRenderContinuousSlotContent(side, slot, true);
   }
 }
 
@@ -244,9 +299,12 @@ export async function renderContinuousDocument(side: PaneSide): Promise<void> {
       hi.setAttribute("aria-hidden", "true");
       const tl = document.createElement("div");
       tl.className = "text-layer";
+      const lk = document.createElement("div");
+      lk.className = "pdf-link-layer";
+      lk.setAttribute("aria-hidden", "true");
       const no = document.createElement("div");
       no.className = "annotation-notes";
-      wrapV.append(c, hi, tl, no);
+      wrapV.append(c, hi, tl, lk, no);
       slot.append(wrapV);
       const { viewport } = await getScaledPageViewport(side, doc, pn, maxW, maxH);
       slot.style.minHeight = `${Math.ceil(viewport.height) + 16}px`;

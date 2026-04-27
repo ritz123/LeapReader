@@ -1,7 +1,7 @@
-import * as pdfjsLib from "pdfjs-dist";
 import { getPane, waitLayout } from "./dom";
 import { emptyPanePdfState } from "./pane-model";
 import { emitBothPanesDocChanged, emitPaneDocChanged } from "./pane-events";
+import { acquirePdfDoc, releasePdfDoc } from "./pdf-doc-pool";
 import { teardownContinuousUi } from "./pdf-continuous";
 import { renderBothPanes, renderPane } from "./render-registry";
 import { session } from "./session";
@@ -12,8 +12,13 @@ export async function clearPane(side: PaneSide): Promise<void> {
   session.paneTextLayers.set(side, null);
   const p = getPane(side);
   p.textLayer.replaceChildren();
-  const prev = session.paneState[side].doc;
-  if (prev) await prev.destroy();
+  const st = session.paneState[side];
+  const prev = st.doc;
+  if (prev && st.docType === "pdf" && st.annotationDocId) {
+    await releasePdfDoc(st.annotationDocId);
+  } else if (prev) {
+    await prev.destroy();
+  }
   session.paneState[side] = emptyPanePdfState();
   session.paneZoomMultiplier[side] = 1;
   session.paneBaseFit[side] = "page";
@@ -47,16 +52,11 @@ export async function loadPdfBufferInitialBoth(
   await clearPane("left");
   await clearPane("right");
 
-  const b1 = data.slice(0);
-  const b2 = data.slice(0);
-  const opts = { isEvalSupported: false, useSystemFonts: true } as const;
-  const [docL, docR] = await Promise.all([
-    pdfjsLib.getDocument({ data: new Uint8Array(b1), ...opts }).promise,
-    pdfjsLib.getDocument({ data: new Uint8Array(b2), ...opts }).promise,
-  ]);
   const ann = storageId ?? `unsaved:${name}:${dataByteLength}`;
-  session.paneState.left = { doc: docL, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
-  session.paneState.right = { doc: docR, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
+  const doc = await acquirePdfDoc(ann, data);
+  await acquirePdfDoc(ann);
+  session.paneState.left = { doc, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
+  session.paneState.right = { doc, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
   getPane("left").pageInput.value = "1";
   getPane("right").pageInput.value = "1";
   // Single emit for both panes replaces four explicit chrome-update calls.
@@ -76,8 +76,12 @@ export async function loadPdfBuffer(
   session.paneTextLayers.set(side, null);
   getPane(side).textLayer.replaceChildren();
 
-  const prev = session.paneState[side].doc;
-  if (prev) await prev.destroy();
+  const oldSt = session.paneState[side];
+  if (oldSt.doc && oldSt.docType === "pdf" && oldSt.annotationDocId) {
+    await releasePdfDoc(oldSt.annotationDocId);
+  } else if (oldSt.doc) {
+    await oldSt.doc.destroy();
+  }
 
   session.paneScrollMode[side] = "continuous";
   session.paneBaseFit[side] = "page";
@@ -87,11 +91,8 @@ export async function loadPdfBuffer(
   pe0.continuousStack.hidden = true;
 
   const dataByteLength = data.byteLength;
-  const doc = await pdfjsLib.getDocument({
-    data: new Uint8Array(data),
-    isEvalSupported: false,
-    useSystemFonts: true,
-  }).promise;
+  const ann = storageId ?? `unsaved:${name}:${dataByteLength}`;
+  const doc = await acquirePdfDoc(ann, data);
 
   // Ensure doc-view is hidden when loading a PDF.
   const pe = getPane(side);
@@ -104,7 +105,7 @@ export async function loadPdfBuffer(
     doc,
     name,
     storageId,
-    annotationDocId: storageId ?? `unsaved:${name}:${dataByteLength}`,
+    annotationDocId: ann,
     docHtml: null,
     docType: "pdf",
   };

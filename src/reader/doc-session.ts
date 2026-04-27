@@ -1,6 +1,7 @@
 import { getPane } from "./dom";
 import { emptyPanePdfState } from "./pane-model";
 import { emitBothPanesDocChanged, emitPaneDocChanged } from "./pane-events";
+import { releasePdfDoc } from "./pdf-doc-pool";
 import { teardownContinuousUi } from "./pdf-continuous";
 import { session } from "./session";
 import type { DocType, PaneSide } from "./types";
@@ -67,8 +68,13 @@ export async function loadDocBuffer(
   // Tear down any existing document in this pane.
   session.paneTextLayers.get(side)?.cancel();
   session.paneTextLayers.set(side, null);
-  const prev = session.paneState[side].doc;
-  if (prev) await prev.destroy();
+  const st = session.paneState[side];
+  const prev = st.doc;
+  if (prev && st.docType === "pdf" && st.annotationDocId) {
+    await releasePdfDoc(st.annotationDocId);
+  } else if (prev) {
+    await prev.destroy();
+  }
   teardownContinuousUi(side);
 
   const html = await toHtml(buf, type);

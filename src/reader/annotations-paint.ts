@@ -39,7 +39,11 @@ export function getAnnotationLayers(
   return { highlights: p.highlightsLayer, notes: p.notesLayer };
 }
 
-export async function paintAnnotations(side: PaneSide, pageNum: number): Promise<void> {
+export async function paintAnnotations(
+  side: PaneSide,
+  pageNum: number,
+  preloadedItems?: storage.AnnotationRecord[]
+): Promise<void> {
   const layers = getAnnotationLayers(side, pageNum);
   if (!layers) return;
   layers.highlights.replaceChildren();
@@ -48,7 +52,7 @@ export async function paintAnnotations(side: PaneSide, pageNum: number): Promise
   if (!annId) return;
   let items: storage.AnnotationRecord[] = [];
   try {
-    items = await storage.listAnnotations(annId);
+    items = preloadedItems ?? (await storage.listAnnotations(annId));
   } catch {
     return;
   }

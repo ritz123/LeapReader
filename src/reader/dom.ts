@@ -1,9 +1,22 @@
+import { session } from "./session";
 import type { PaneElements, PaneSide } from "./types";
 
 export function waitLayout(): Promise<void> {
   return new Promise<void>((r) =>
     requestAnimationFrame(() => requestAnimationFrame(() => r()))
   );
+}
+
+/**
+ * Skips {@link waitLayout}'s ~2-frame delay when the pane’s canvas wrap already matches
+ * the last measured size (common when only the page number changes).
+ */
+export async function waitLayoutIfPaneSizeChanged(side: PaneSide, wrap: HTMLElement): Promise<void> {
+  const snap = session.paneLayoutSnapshot.get(side);
+  const w = Math.round(wrap.clientWidth);
+  const h = Math.round(wrap.clientHeight);
+  if (snap && snap.w === w && snap.h === h) return;
+  await waitLayout();
 }
 
 export function truncateTitle(s: string, max: number): string {

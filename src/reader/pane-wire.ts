@@ -103,6 +103,7 @@ export function wirePane(side: PaneSide): void {
     const vp = (e.target as HTMLElement).closest(".page-viewport");
     if (!vp || !p.root.contains(vp)) return;
     if ((e.target as HTMLElement).closest(".ann-note-pin")) return;
+    if ((e.target as HTMLElement).closest(".pdf-link-hit")) return;
     e.preventDefault();
     const rect = vp.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;

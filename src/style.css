@@ -289,6 +289,10 @@ body.note-mode .text-layer {
   pointer-events: none;
 }
 
+body.note-mode .pdf-link-layer {
+  pointer-events: none;
+}
+
 .marks-dialog-list {
   max-height: min(45vh, 18rem);
 }
@@ -1027,10 +1031,33 @@ body.layout-one-pane #split[data-active-tab="right"] .pane[data-side="right"] {
   -webkit-user-select: text;
 }
 
+.pdf-link-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.pdf-link-hit {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.pdf-link-hit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .annotation-notes {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 5;
   pointer-events: none;
 }
 

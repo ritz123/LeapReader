@@ -42,6 +42,11 @@ export const session = {
     left: "continuous" as PaneScrollMode,
     right: "continuous" as PaneScrollMode,
   },
+  /**
+   * Incremented on each single-page PDF paint; stale async text/link layers bail out so
+   * rapid navigation (e.g. internal links) does not apply outdated work.
+   */
+  pdfInteractiveGen: { left: 0, right: 0 } as Record<PaneSide, number>,
 
   // ── Continuous-scroll internals ───────────────────────────────────────────
   continuousRev: { left: 0, right: 0 } as Record<PaneSide, number>,

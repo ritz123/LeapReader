@@ -92,12 +92,26 @@ export async function listRecentDocuments(limit = 60): Promise<DocumentMeta[]> {
   return idb.listRecentDocuments(limit);
 }
 
+/** Avoid re-reading storage on every page flip; invalidated when marks change for that doc. */
+const annotationListCache = new Map<string, AnnotationRecord[]>();
+
+function invalidateAnnotationListCache(docId: string): void {
+  annotationListCache.delete(docId);
+}
+
 export async function listAnnotations(docId: string): Promise<AnnotationRecord[]> {
+  const cached = annotationListCache.get(docId);
+  if (cached) return cached.slice();
+
+  let items: AnnotationRecord[];
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.listAnnotations(docId);
+    items = await file.listAnnotations(docId);
+  } else {
+    items = await idb.listAnnotations(docId);
   }
-  return idb.listAnnotations(docId);
+  annotationListCache.set(docId, items);
+  return items.slice();
 }
 
 /** All highlights and notes (for backup / export). */
@@ -112,9 +126,11 @@ export async function listAllAnnotations(): Promise<AnnotationRecord[]> {
 export async function putAnnotation(rec: AnnotationRecord): Promise<void> {
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.putAnnotation(rec);
+    await file.putAnnotation(rec);
+  } else {
+    await idb.putAnnotation(rec);
   }
-  return idb.putAnnotation(rec);
+  invalidateAnnotationListCache(rec.docId);
 }
 
 export async function getAnnotation(id: string): Promise<AnnotationRecord | null> {
@@ -128,33 +144,46 @@ export async function getAnnotation(id: string): Promise<AnnotationRecord | null
 export async function reassignAnnotationsDocId(fromDocId: string, toDocId: string): Promise<void> {
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.reassignAnnotationsDocId(fromDocId, toDocId);
+    await file.reassignAnnotationsDocId(fromDocId, toDocId);
+  } else {
+    await idb.reassignAnnotationsDocId(fromDocId, toDocId);
   }
-  return idb.reassignAnnotationsDocId(fromDocId, toDocId);
+  invalidateAnnotationListCache(fromDocId);
+  invalidateAnnotationListCache(toDocId);
 }
 
 export async function updateNoteText(id: string, text: string): Promise<boolean> {
+  const prev = await getAnnotation(id);
+  let ok: boolean;
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.updateNoteText(id, text);
+    ok = await file.updateNoteText(id, text);
+  } else {
+    ok = await idb.updateNoteText(id, text);
   }
-  return idb.updateNoteText(id, text);
+  if (ok && prev) invalidateAnnotationListCache(prev.docId);
+  return ok;
 }
 
 export async function deleteAnnotation(id: string): Promise<void> {
+  const prev = await getAnnotation(id);
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.deleteAnnotation(id);
+    await file.deleteAnnotation(id);
+  } else {
+    await idb.deleteAnnotation(id);
   }
-  return idb.deleteAnnotation(id);
+  if (prev) invalidateAnnotationListCache(prev.docId);
 }
 
 export async function deleteDocument(id: string): Promise<void> {
   if (useFileBackend()) {
     await ensureFileInit();
-    return file.deleteDocument(id);
+    await file.deleteDocument(id);
+  } else {
+    await idb.deleteDocument(id);
   }
-  return idb.deleteDocument(id);
+  invalidateAnnotationListCache(id);
 }
 
 export async function createLibrary(name: string): Promise<LibraryRecord | null> {
