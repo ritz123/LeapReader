@@ -16,10 +16,17 @@ import {
   updateSelectionButtons,
 } from "./chrome-toolbar";
 import { copySelectionToClipboard } from "./copy-clipboard";
-import { NARROW_MAX_PX, ZOOM_STEP, LAYOUT_STORAGE_KEY, PANE_MODE_STORAGE_KEY, LAST_HIGHLIGHT_COLOR_KEY } from "./config";
-import { bumpContinuousRevForOpenContinuousPanes } from "./continuous-helpers";
+import {
+  NARROW_MAX_PX,
+  ZOOM_STEP,
+  LAYOUT_STORAGE_KEY,
+  PANE_MODE_STORAGE_KEY,
+  SPLIT_RATIO_STORAGE_KEY,
+  LAST_HIGHLIGHT_COLOR_KEY,
+} from "./config";
+import { bumpContinuousRev, bumpContinuousRevForOpenContinuousPanes } from "./continuous-helpers";
 import { waitLayout } from "./dom";
-import { wireFileInput } from "./file-open";
+import { openDocumentBuffer, wireFileInput } from "./file-open";
 import {
   closeAllPaneFlyouts,
   closeLibrariesEmbed,
@@ -40,7 +47,7 @@ import {
   setActivePaneTab,
   syncPaneTabButtons,
 } from "./layout-controller";
-import { setLayoutMode, setPaneMode } from "./layout-bindings";
+import { layoutRuntime, setLayoutMode, setPaneMode } from "./layout-bindings";
 import { setAfterLayoutHandler, notifyAfterLayoutChange } from "./lifecycle";
 import { refreshMarksDialog } from "./marks-dialog";
 import { printPane } from "./print-pane";
@@ -58,7 +65,13 @@ import {
   loadPdfBuffer,
   loadPdfBufferInitialBoth,
 } from "./pdf-session";
-import { registerPdfRender, renderBothPanes } from "./render-registry";
+import {
+  PAGE_FRAME_ASPECT_KEY_PREFIX,
+  loadPageFrameAspectsIntoSession,
+  syncPageFrameSelect,
+  writeStoredPageFrameAspect,
+} from "./page-frame";
+import { registerPdfRender, renderBothPanes, renderPane } from "./render-registry";
 import { renderBothPanesImpl, renderPaneImpl } from "./pdf-render-pane";
 import { initZoomListeners } from "./zoom-pane";
 import { dismissSplashWhenReady } from "./splash";
@@ -68,8 +81,42 @@ import { updateSelectionFloatBar } from "./selection-float-bar";
 import { getHighlightColorPopover, session } from "./session";
 import type { PaneSide } from "./types";
 import { adjustPaneZoom, setPaneBaseFit, syncZoomUi } from "./zoom-pane";
+import { applySplitRatioToDom, initSplitDivider } from "./split-ratio";
+
+function bufferFromDesktopPayload(data: ArrayBuffer | Uint8Array): ArrayBuffer {
+  if (data instanceof ArrayBuffer) return data;
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+}
+
+function initDesktopLaunchOpen(): void {
+  const shift = window.leapReaderDesktop?.shiftLaunchFile;
+  if (!shift) return;
+
+  const drainQueue = async (): Promise<void> => {
+    let item = await shift();
+    while (item) {
+      try {
+        await openDocumentBuffer(
+          bufferFromDesktopPayload(item.buffer),
+          item.name,
+          item.lastModified,
+          "left"
+        );
+      } catch (err) {
+        console.error(err);
+        alert(`Could not open ${item.name}.`);
+      }
+      item = await shift();
+    }
+  };
+
+  void drainQueue();
+  window.leapReaderDesktop?.onLaunchQueueChanged?.(() => void drainQueue());
+}
 
 export function bootstrapReader(): void {
+  loadPageFrameAspectsIntoSession();
+
   // Register event-bus subscribers so chrome updates fire automatically
   // on every pane state change (Open/Closed: add new concerns here, not
   // in the state-mutation modules).
@@ -135,7 +182,10 @@ export function bootstrapReader(): void {
   document.getElementById("btn-reset-prefs-yes")?.addEventListener("click", () => {
     localStorage.removeItem(PANE_MODE_STORAGE_KEY);
     localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    localStorage.removeItem(SPLIT_RATIO_STORAGE_KEY);
     localStorage.removeItem(LAST_HIGHLIGHT_COLOR_KEY);
+    localStorage.removeItem(`${PAGE_FRAME_ASPECT_KEY_PREFIX}left`);
+    localStorage.removeItem(`${PAGE_FRAME_ASPECT_KEY_PREFIX}right`);
     location.reload();
   });
 
@@ -290,6 +340,22 @@ export function bootstrapReader(): void {
     });
     document.getElementById(`btn-print-${side}-without-hl`)?.addEventListener("click", () => {
       printPane(side, false);
+    });
+  }
+
+  for (const side of ["left", "right"] as const) {
+    syncPageFrameSelect(side);
+    const sel = document.getElementById(`page-frame-${side}`) as HTMLSelectElement | null;
+    sel?.addEventListener("change", () => {
+      const v = sel.value;
+      const aspect = v === "" ? null : parseFloat(v);
+      session.panePageFrameAspect[side] =
+        aspect != null && Number.isFinite(aspect) && aspect > 0 ? aspect : null;
+      writeStoredPageFrameAspect(side, session.panePageFrameAspect[side]);
+      session.paneLayoutSnapshot.delete(side);
+      if (session.paneScrollMode[side] === "continuous") bumpContinuousRev(side);
+      void renderPane(side);
+      syncZoomUi(side);
     });
   }
 
@@ -450,6 +516,14 @@ export function bootstrapReader(): void {
     if (!anyPaneHasDoc()) return;
     void renderBothPanes();
   });
+
+  applySplitRatioToDom();
+  initSplitDivider(() => {
+    layoutRuntime().invalidatePaneMeasures();
+    void waitLayout().then(() => notifyAfterLayoutChange());
+  });
+
+  initDesktopLaunchOpen();
 
   dismissSplashWhenReady();
 

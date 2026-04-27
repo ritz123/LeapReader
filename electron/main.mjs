@@ -120,6 +120,52 @@ ipcMain.handle("leap-reader-fs", async (_event, payload) => {
   }
 });
 
+/** Paths from CLI (`electron path/to.pdf`) or OS “open with” — popped by renderer via preload. */
+const pendingLaunchFiles = [];
+
+function collectFilePathsFromArgv(argv) {
+  const paths = [];
+  const start = process.defaultApp ? 2 : 1;
+  for (let i = start; i < argv.length; i++) {
+    const a = argv[i];
+    if (!a || a.startsWith("-")) continue;
+    try {
+      const resolved = path.resolve(a);
+      const st = fsSync.statSync(resolved);
+      if (st.isFile()) paths.push(resolved);
+    } catch {
+      /* skip */
+    }
+  }
+  return paths;
+}
+
+function enqueueLaunchPathsFromArgv(argv) {
+  for (const p of collectFilePathsFromArgv(argv)) {
+    pendingLaunchFiles.push(p);
+  }
+}
+
+enqueueLaunchPathsFromArgv(process.argv);
+
+ipcMain.handle("leap-reader-shift-launch-file", async () => {
+  const next = pendingLaunchFiles.shift();
+  if (!next) return null;
+  try {
+    const buf = await fs.readFile(next);
+    const st = await fs.stat(next);
+    return {
+      path: next,
+      name: path.basename(next),
+      buffer: new Uint8Array(buf),
+      lastModified: st.mtimeMs,
+    };
+  } catch (e) {
+    console.error("Could not read launch file:", next, e);
+    return null;
+  }
+});
+
 /** Fixed port so the origin is stable across restarts — IndexedDB (notes, libraries, Recent) keys off http://127.0.0.1:PORT */
 const LEAP_READER_PORT = 47847;
 
@@ -251,10 +297,12 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
-    if (mainWindow) {
+  app.on("second-instance", (_event, argv) => {
+    enqueueLaunchPathsFromArgv(argv);
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
+      mainWindow.webContents.send("leap-reader-launch-queue-changed");
     }
   });
 

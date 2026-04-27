@@ -7,6 +7,15 @@ function toArrayBuffer(u8) {
   return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
 }
 
+contextBridge.exposeInMainWorld("leapReaderDesktop", {
+  shiftLaunchFile: () => ipcRenderer.invoke("leap-reader-shift-launch-file"),
+  onLaunchQueueChanged: (handler) => {
+    const wrapped = () => handler();
+    ipcRenderer.on("leap-reader-launch-queue-changed", wrapped);
+    return () => ipcRenderer.removeListener("leap-reader-launch-queue-changed", wrapped);
+  },
+});
+
 contextBridge.exposeInMainWorld("leapReaderStorage", {
   getDataDirPath: () => ipcRenderer.invoke("leap-reader-fs", { op: "getDataDirPath" }),
   readText: (relPath) => ipcRenderer.invoke("leap-reader-fs", { op: "readText", relPath }),

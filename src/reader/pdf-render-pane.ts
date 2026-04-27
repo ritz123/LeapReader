@@ -8,6 +8,7 @@ import {
   renderContinuousDocument,
   teardownContinuousUi,
 } from "./pdf-continuous";
+import { getPdfFitBoxForPane } from "./page-frame";
 import { bindTextLayerScale, getScaledPageViewport } from "./pdf-viewport";
 import { session } from "./session";
 import type { PaneSide } from "./types";
@@ -28,8 +29,7 @@ async function renderSinglePageInPane(side: PaneSide): Promise<void> {
 
   await waitLayout();
   const wrap = p.canvasWrap;
-  const maxW = Math.max(100, wrap.clientWidth - 16);
-  const maxH = Math.max(100, wrap.clientHeight - 16);
+  const { maxW, maxH } = getPdfFitBoxForPane(side, wrap);
   const { page, viewport: vp } = await getScaledPageViewport(side, doc, pageNum, maxW, maxH);
 
   const canvas = p.canvas;

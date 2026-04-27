@@ -36,6 +36,8 @@ export const session = {
     left: "page" as PaneBaseFit,
     right: "page" as PaneBaseFit,
   },
+  /** PDF page fitting area: `null` uses full pane; otherwise width÷height of the inset box (letterboxed). */
+  panePageFrameAspect: { left: null as number | null, right: null as number | null },
   paneScrollMode: {
     left: "continuous" as PaneScrollMode,
     right: "continuous" as PaneScrollMode,

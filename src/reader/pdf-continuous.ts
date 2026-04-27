@@ -3,6 +3,7 @@ import { paintAnnotations } from "./annotations-paint";
 import { updateNavDisabled } from "./chrome-toolbar";
 import { continuousLayerKey } from "./continuous-helpers";
 import { getPane, waitLayout } from "./dom";
+import { getPdfFitBoxForPane } from "./page-frame";
 import { bindTextLayerScale, getScaledPageViewport } from "./pdf-viewport";
 import { session } from "./session";
 import type { PaneSide } from "./types";
@@ -143,8 +144,7 @@ async function doRenderContinuousSlotContent(side: PaneSide, slot: HTMLElement):
   await waitLayout();
   if (session.continuousRev[side] !== revAtStart) return;
 
-  const maxW = Math.max(100, p.canvasWrap.clientWidth - 16);
-  const maxH = Math.max(100, p.canvasWrap.clientHeight - 16);
+  const { maxW, maxH } = getPdfFitBoxForPane(side, p.canvasWrap);
   const { page, viewport: vp } = await getScaledPageViewport(side, doc, pageNum, maxW, maxH);
 
   if (session.continuousRev[side] !== revAtStart) return;
@@ -224,8 +224,7 @@ export async function renderContinuousDocument(side: PaneSide): Promise<void> {
   p.singlePageShell.hidden = true;
   p.continuousStack.hidden = false;
 
-  const maxW = Math.max(100, p.canvasWrap.clientWidth - 16);
-  const maxH = Math.max(100, p.canvasWrap.clientHeight - 16);
+  const { maxW, maxH } = getPdfFitBoxForPane(side, p.canvasWrap);
 
   if (session.continuousBuiltRev[side] !== session.continuousRev[side]) {
     teardownContinuousUi(side);

@@ -177,6 +177,16 @@
                     Fit width
                   </button>
                 </div>
+                <div class="pane-flyout-row pane-flyout-row--frame">
+                  <label class="pane-flyout-label-inline" for="page-frame-left">Page frame</label>
+                  <select id="page-frame-left" class="text-input frame-select" aria-label="Left pane page frame aspect" title="Fit the page inside this shape; Auto uses the full pane">
+                    <option value="">Auto (full pane)</option>
+                    <option value="1.3333333333333333">4∶3</option>
+                    <option value="0.75">3∶4</option>
+                    <option value="1.7777777777777777">16∶9</option>
+                    <option value="1">1∶1</option>
+                  </select>
+                </div>
               </div>
               <div class="pane-flyout-group">
                 <label class="btn primary btn-compact btn-block">
@@ -224,7 +234,7 @@
         </div>
       </section>
 
-      <div class="divider" aria-hidden="true"></div>
+      <div class="divider split-divider" aria-label="Resize panes"></div>
 
       <section class="pane" data-side="right">
         <div class="canvas-wrap">
@@ -297,6 +307,16 @@
                   <button type="button" class="btn btn-compact btn-zoom-width" id="btn-zoom-width-right" disabled title="Fit page width; scroll vertically">
                     Fit width
                   </button>
+                </div>
+                <div class="pane-flyout-row pane-flyout-row--frame">
+                  <label class="pane-flyout-label-inline" for="page-frame-right">Page frame</label>
+                  <select id="page-frame-right" class="text-input frame-select" aria-label="Right pane page frame aspect" title="Fit the page inside this shape; Auto uses the full pane">
+                    <option value="">Auto (full pane)</option>
+                    <option value="1.3333333333333333">4∶3</option>
+                    <option value="0.75">3∶4</option>
+                    <option value="1.7777777777777777">16∶9</option>
+                    <option value="1">1∶1</option>
+                  </select>
                 </div>
               </div>
               <div class="pane-flyout-group">
