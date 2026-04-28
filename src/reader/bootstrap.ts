@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import {
   buildAnnotationsExportPayload,
   downloadAnnotationsExport,
@@ -112,6 +113,33 @@ function initDesktopLaunchOpen(): void {
 
   void drainQueue();
   window.leapReaderDesktop?.onLaunchQueueChanged?.(() => void drainQueue());
+}
+
+/** Android: ACTION_VIEW opens a copy in cache; WebView loads it via Capacitor file URL bridge. */
+function initAndroidLaunchOpen(): void {
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") return;
+
+  const handler = (ev: Event): void => {
+    const d = ev as unknown as { fileUrl?: string; name?: string; lastModified?: number };
+    const fileUrl = d.fileUrl;
+    const name = d.name;
+    if (!fileUrl || !name) return;
+    const lastModified = typeof d.lastModified === "number" ? d.lastModified : Date.now();
+    void (async () => {
+      try {
+        const src = Capacitor.convertFileSrc(fileUrl);
+        const res = await fetch(src);
+        if (!res.ok) throw new Error(String(res.status));
+        const buf = await res.arrayBuffer();
+        await openDocumentBuffer(buf, name, lastModified, "left");
+      } catch (err) {
+        console.error(err);
+        alert(`Could not open ${name}.`);
+      }
+    })();
+  };
+
+  window.addEventListener("leapReaderAndroidFileOpen", handler);
 }
 
 export function bootstrapReader(): void {
@@ -524,6 +552,7 @@ export function bootstrapReader(): void {
   });
 
   initDesktopLaunchOpen();
+  initAndroidLaunchOpen();
 
   dismissSplashWhenReady();
 

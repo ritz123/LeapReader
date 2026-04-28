@@ -148,6 +148,21 @@ function enqueueLaunchPathsFromArgv(argv) {
 
 enqueueLaunchPathsFromArgv(process.argv);
 
+/** macOS: Finder “Open with” / double-click passes the path here (not argv). */
+app.on("open-file", (event, filePath) => {
+  event.preventDefault();
+  try {
+    const resolved = path.resolve(filePath);
+    const st = fsSync.statSync(resolved);
+    if (st.isFile()) pendingLaunchFiles.push(resolved);
+  } catch {
+    /* skip */
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("leap-reader-launch-queue-changed");
+  }
+});
+
 ipcMain.handle("leap-reader-shift-launch-file", async () => {
   const next = pendingLaunchFiles.shift();
   if (!next) return null;

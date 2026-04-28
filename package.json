@@ -69,6 +69,22 @@
         ]
       }
     ],
+    "fileAssociations": [
+      {
+        "ext": "pdf",
+        "name": "PDF document",
+        "description": "Portable Document Format",
+        "mimeType": "application/pdf",
+        "role": "Viewer"
+      },
+      {
+        "ext": "txt",
+        "name": "Plain text",
+        "description": "Plain text document",
+        "mimeType": "text/plain",
+        "role": "Viewer"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage",
@@ -79,8 +95,8 @@
       "maintainer": "Leap reader <noreply@localhost>",
       "icon": "build/icons/icon.png",
       "desktop": {
-        "MimeType": "application/pdf;",
-        "Keywords": "pdf;reader;document;"
+        "MimeType": "application/pdf;text/plain;",
+        "Keywords": "pdf;txt;reader;document;"
       }
     },
     "deb": {
