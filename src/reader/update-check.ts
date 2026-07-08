@@ -1,12 +1,10 @@
 /**
- * Checks GitHub Releases once per day and notifies when a newer version
- * is available. Results are cached in localStorage for 24 hours.
+ * Checks GitHub Releases on every startup and notifies when a newer version
+ * is available.
  */
 
 const REPO = "ritz123/LeapReader";
 const API_URL = `https://api.github.com/repos/${REPO}/releases/latest`;
-const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const LAST_CHECK_KEY = "updateCheckAt";
 const UPDATE_KEY = "updateAvailable";
 
 export interface UpdateInfo {
@@ -66,35 +64,11 @@ async function fetchLatestRelease(): Promise<UpdateInfo> {
   }
 }
 
-/** Checks for updates (throttled to once per day). Call once after startup. */
+/** Checks for updates on every call. Call once after startup. */
 export async function checkForUpdate(
   onUpdate: (info: UpdateInfo) => void
 ): Promise<void> {
-  // Re-surface cached result immediately without a network hit.
-  const cached = localStorage.getItem(UPDATE_KEY);
-  if (cached) {
-    try {
-      const info = JSON.parse(cached) as UpdateInfo;
-      if (info.version && info.url) {
-        // Recalculate isUpToDate in case the local version was upgraded.
-        info.isUpToDate = !isNewer(__APP_VERSION__, info.version);
-        onUpdate(info);
-      } else {
-        localStorage.removeItem(UPDATE_KEY);
-      }
-    } catch {
-      localStorage.removeItem(UPDATE_KEY);
-    }
-  }
-
-  // Hit the API at most once per day.
-  const lastCheck = localStorage.getItem(LAST_CHECK_KEY);
-  if (lastCheck && Date.now() - new Date(lastCheck).getTime() < CHECK_INTERVAL_MS) {
-    return;
-  }
-
   const info = await fetchLatestRelease();
-  localStorage.setItem(LAST_CHECK_KEY, new Date().toISOString());
 
   if (!info.error) {
     localStorage.setItem(UPDATE_KEY, JSON.stringify(info));
