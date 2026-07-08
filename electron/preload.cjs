@@ -50,6 +50,16 @@ contextBridge.exposeInMainWorld("leapReaderAI", {
     return () => ipcRenderer.removeListener("backend:failed", wrapped);
   },
   /**
+   * Called when the packaged app is running first-launch Python venv setup.
+   * @param {(data: {message: string}) => void} cb
+   * @returns {() => void}
+   */
+  onBackendSettingUp: (cb) => {
+    const wrapped = (_event, data) => cb(data);
+    ipcRenderer.on("backend:setting_up", wrapped);
+    return () => ipcRenderer.removeListener("backend:setting_up", wrapped);
+  },
+  /**
    * Called on each model pull progress tick.
    * @param {(event: {type:"pull_progress",pane_id:string,payload:{model:string,percent:number,status:string}}) => void} cb
    * @returns {() => void}

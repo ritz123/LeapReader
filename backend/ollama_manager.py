@@ -24,7 +24,25 @@ from pathlib import Path
 import httpx
 import ollama_client as _oc
 
-OLLAMA_HOST = "http://127.0.0.1:11434"
+
+def _default_ollama_host() -> str:
+    """
+    Return the Ollama host URL to use, respecting the OLLAMA_HOST env var.
+
+    Ollama itself accepts OLLAMA_HOST in the bare form "host:port" or with a
+    scheme.  We normalise it to a full http:// URL so the rest of the code
+    can treat it uniformly.
+    """
+    raw = os.environ.get("OLLAMA_HOST", "").strip()
+    if not raw:
+        return "http://127.0.0.1:11434"
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return raw.rstrip("/")
+    # bare "host:port" form (Ollama's native format)
+    return f"http://{raw}"
+
+
+OLLAMA_HOST = _default_ollama_host()
 OLLAMA_READY_TIMEOUT = 10.0       # seconds to wait for external / path Ollama
 OLLAMA_BUNDLED_READY_TIMEOUT = 30.0  # longer timeout for bundled first-boot
 OLLAMA_READY_POLL = 0.25

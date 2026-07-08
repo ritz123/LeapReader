@@ -17,7 +17,7 @@
 import { app, ipcMain, BrowserWindow } from "electron";
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { tmpdir, homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,16 +42,88 @@ let _retryTimer = null;
 function resolvePaths() {
   if (app.isPackaged) {
     const base = path.join(process.resourcesPath, "backend");
-    return {
-      python: path.join(base, ".venv", "bin", "python"),
-      script: path.join(base, "main.py"),
-    };
+    // In a packaged app the resources dir is read-only (AppImage squashfs).
+    // The .venv is created on first launch into a writable userData directory.
+    const venvPython = path.join(app.getPath("userData"), "backend-venv", "bin", "python");
+    return { python: venvPython, script: path.join(base, "main.py"), sourceDir: base };
   }
   const root = path.join(__dirname, "..");
-  return {
-    python: path.join(root, "backend", ".venv", "bin", "python"),
-    script: path.join(root, "backend", "main.py"),
-  };
+  const base = path.join(root, "backend");
+  return { python: path.join(base, ".venv", "bin", "python"), script: path.join(base, "main.py"), sourceDir: base };
+}
+
+/**
+ * Locate `uv` on PATH or in well-known install locations.
+ * Returns the resolved path, or null if not found.
+ */
+function findUv() {
+  const candidates = [
+    "uv",
+    path.join(homedir(), ".local", "bin", "uv"),
+    path.join(homedir(), ".cargo", "bin", "uv"),
+    "/usr/local/bin/uv",
+    "/opt/homebrew/bin/uv",
+  ];
+  for (const candidate of candidates) {
+    try {
+      // A quick synchronous check — just stat the file, no execution needed.
+      if (existsSync(candidate)) return candidate;
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
+/**
+ * Ensure the Python virtual-environment exists.
+ *
+ * Dev mode  → expects .venv inside the source tree (created by `uv sync`).
+ * Packaged  → the resources dir is read-only, so we keep the venv in
+ *             userData/backend-venv and create it on first launch via `uv sync`.
+ *
+ * Emits `backend:setting_up` while the one-time setup runs so the UI can
+ * show a progress message instead of a blank/failed state.
+ */
+async function ensureVenv({ python, sourceDir }) {
+  if (existsSync(python)) return; // already good
+
+  if (!app.isPackaged) {
+    throw new Error(
+      `Python binary not found at: ${python}\nRun 'uv sync' inside the backend/ directory.`
+    );
+  }
+
+  // ── First-launch setup for packaged app ────────────────────────────────────
+  const uv = findUv();
+  if (!uv) {
+    throw new Error(
+      "AI setup requires `uv` (https://docs.astral.sh/uv/).\n" +
+      "Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh\n" +
+      "Then relaunch the app."
+    );
+  }
+
+  const venvDir = path.join(app.getPath("userData"), "backend-venv");
+  broadcast("backend:setting_up", { message: "Setting up AI environment (first launch)…" });
+  console.log(`[ai-bridge] Running uv sync → ${venvDir}`);
+
+  await new Promise((resolve, reject) => {
+    const proc = spawn(uv, ["sync", "--project", sourceDir], {
+      env: { ...process.env, UV_PROJECT_ENVIRONMENT: venvDir },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    proc.stdout?.on("data", (d) => process.stdout.write(`[ai-setup] ${d}`));
+    proc.stderr?.on("data", (d) => process.stderr.write(`[ai-setup] ${d}`));
+    proc.on("error", reject);
+    proc.on("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`uv sync exited with code ${code}`));
+    });
+  });
+
+  if (!existsSync(python)) {
+    throw new Error("Python venv setup completed but python binary still not found — please report this as a bug.");
+  }
+  console.log("[ai-bridge] Python venv ready.");
 }
 
 /** Broadcast an IPC event to all open renderer windows. */
@@ -110,13 +182,10 @@ async function waitForHttp(port) {
 
 /** Spawn the sidecar process. Does NOT handle retries — call spawnWithRetry instead. */
 async function spawnOnce(windows) {
-  const { python, script } = resolvePaths();
+  const paths = resolvePaths();
+  const { python, script } = paths;
 
-  if (!existsSync(python)) {
-    throw new Error(
-      `Python binary not found at: ${python}\nRun 'uv sync' inside the backend/ directory.`
-    );
-  }
+  await ensureVenv(paths);
 
   // Clean up stale port file
   try {
@@ -125,8 +194,28 @@ async function spawnOnce(windows) {
     /* ignore */
   }
 
+  const childEnv = { ...process.env, LEAPREADER_PORT: "0" };
+
+  // When running from an AppImage the runtime prepends AppImage-internal
+  // paths to LD_LIBRARY_PATH so that Electron finds its bundled libraries.
+  // The Python subprocess does not need those paths and they can shadow
+  // system networking libraries (libssl, libcrypto, etc.), silently
+  // breaking httpx connections to localhost.  Strip them here.
+  if (process.env.APPDIR && childEnv.LD_LIBRARY_PATH) {
+    const appdir = process.env.APPDIR;
+    const filtered = childEnv.LD_LIBRARY_PATH
+      .split(":")
+      .filter((p) => p && !p.startsWith(appdir))
+      .join(":");
+    if (filtered) {
+      childEnv.LD_LIBRARY_PATH = filtered;
+    } else {
+      delete childEnv.LD_LIBRARY_PATH;
+    }
+  }
+
   _proc = spawn(python, [script], {
-    env: { ...process.env, LEAPREADER_PORT: "0" },
+    env: childEnv,
     stdio: ["ignore", "pipe", "pipe"],
     // detached: false (default) — on SIGKILL, OS will also reap child processes on Linux/macOS
     // Use a process group so that SIGTERM propagates to Ollama child

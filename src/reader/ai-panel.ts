@@ -415,6 +415,12 @@ export function initAiPanel(): void {
     }
   });
 
+  ai.onBackendSettingUp?.((data: { message: string }) => {
+    for (const side of ["left", "right"] as PaneSide[]) {
+      setStatus(side, data.message ?? "Setting up AI environment…");
+    }
+  });
+
   ai.onBackendDown?.((data: { attempt: number; maxAttempts: number }) => {
     _backendPort = null;  // Prevent stale port usage during restart window (EC-08)
     for (const side of ["left", "right"] as PaneSide[]) {
