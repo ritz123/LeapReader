@@ -57,6 +57,7 @@ export function updateSelectionFloatBar(): void {
     return;
   }
   session.lastSelectionFloatSide = side;
+  el.dataset.paneId = side; // AD-10: pane-origin tag for Ask AI routing
   el.hidden = false;
   const place = () => {
     const fw = el.offsetWidth || 220;

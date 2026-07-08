@@ -6,3 +6,8 @@ release/
 ANDROID_KEYSTORE_BASE64.txt
 *.swp
 keystore_base64.txt
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo

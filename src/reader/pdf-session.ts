@@ -55,8 +55,8 @@ export async function loadPdfBufferInitialBoth(
   const ann = storageId ?? `unsaved:${name}:${dataByteLength}`;
   const doc = await acquirePdfDoc(ann, data);
   await acquirePdfDoc(ann);
-  session.paneState.left = { doc, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
-  session.paneState.right = { doc, name, storageId, annotationDocId: ann, docHtml: null, docType: "pdf" };
+  session.paneState.left = { doc, name, storageId, annotationDocId: ann, docHtml: null, docRaw: null, docType: "pdf" };
+  session.paneState.right = { doc, name, storageId, annotationDocId: ann, docHtml: null, docRaw: null, docType: "pdf" };
   getPane("left").pageInput.value = "1";
   getPane("right").pageInput.value = "1";
   // Single emit for both panes replaces four explicit chrome-update calls.
@@ -107,6 +107,7 @@ export async function loadPdfBuffer(
     storageId,
     annotationDocId: ann,
     docHtml: null,
+    docRaw: null,
     docType: "pdf",
   };
   session.paneZoomMultiplier[side] = 1;

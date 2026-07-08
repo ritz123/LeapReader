@@ -1,0 +1,67 @@
+# Sprint Status — LeapReader AI Integration
+# generated: 2026-07-07
+# project: LeapReader
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: "_bmad-output/implementation-artifacts/stories"
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Loop: /loop 1m /bmad-dev-story — 20 runs total
+# - Each run implements one story; loop stops when run_count == 20
+# - create-story runs automatically when no ready-for-dev story exists
+
+generated: 2026-07-07 22:02
+last_updated: 2026-07-07 23:29
+project: LeapReader
+project_key: NOKEY
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts/stories"
+
+development_status:
+  epic-1: done
+  1-1-branch-setup-and-python-backend-scaffold: done
+  1-2-python-backend-process-lifecycle: done
+  1-3-ollama-auto-install-and-auto-start: done
+  1-4-default-model-auto-pull-with-progress: done
+  1-5-streaming-infrastructure-context-trimming-and-privacy-help-text: done
+  epic-1-retrospective: optional
+
+  epic-2: done
+  2-1-ai-panel-toggle-button-and-chat-panel-shell: done
+  2-2-message-thread-and-sse-token-rendering: done
+  2-3-text-input-submit-and-abort: done
+  2-4-pane-bound-context-injection: done
+  2-5-clear-chat-session: done
+  2-6-ask-ai-from-text-selection: done
+  epic-2-retrospective: optional
+
+  epic-3: done
+  3-1-summarize-shortcut: done
+  3-2-review-backend-pdf-extraction-and-react-agent: done
+  3-3-review-frontend-tool-status-and-streaming-output: done
+  3-4-review-offline-mode: done
+  epic-3-retrospective: optional
+
+  epic-4: done
+  4-1-web-search-toggle-and-grounded-response: done
+  4-2-source-attribution-chips: done
+  4-3-model-browser-list-and-switch-models: done
+  4-4-model-browser-pull-new-model: done
+  epic-4-retrospective: optional
+
+action_items: []

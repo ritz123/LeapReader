@@ -149,6 +149,16 @@
               </div>
               <button
                 type="button"
+                class="icon-btn pane-ai-fab"
+                id="pane-ai-left"
+                aria-label="Toggle AI assistant (left)"
+                title="AI Assistant"
+                aria-pressed="false"
+              >
+                AI
+              </button>
+              <button
+                type="button"
                 class="icon-btn pane-tools-fab"
                 id="pane-tools-left"
                 aria-expanded="false"
@@ -158,6 +168,24 @@
               >
                 ⋯
               </button>
+            </div>
+          </div>
+          <div class="ai-chat-panel" id="ai-chat-panel-left" hidden>
+            <div class="ai-chat-header">
+              <button type="button" class="ai-model-badge ai-model-switch-btn" id="ai-model-badge-left" title="Switch model" aria-haspopup="listbox"></button>
+              <span class="ai-doc-badge" id="ai-doc-badge-left">No document</span>
+              <div class="ai-chat-header-actions">
+                <button type="button" class="btn btn-compact ai-clear-btn" id="ai-clear-btn-left" aria-label="Clear chat">Clear</button>
+                <button type="button" class="icon-btn ai-chat-popout" id="ai-chat-popout-left" aria-label="Pop out AI chat" title="Pop out chat" aria-pressed="false">⧉</button>
+                <button type="button" class="icon-btn ai-chat-close" id="ai-chat-close-left" aria-label="Close AI panel">✕</button>
+              </div>
+            </div>
+            <div class="ai-model-picker" id="ai-model-picker-left" hidden role="listbox" aria-label="Select model"></div>
+            <div class="ai-chat-messages" id="ai-chat-messages-left">
+              <div class="ai-chat-status" id="ai-chat-status-left">Connecting to AI…</div>
+            </div>
+            <div class="ai-chat-input-row" id="ai-chat-input-row-left" hidden>
+              <!-- Story 2.3 fills this in -->
             </div>
           </div>
           <div id="pane-flyout-backdrop-left" class="pane-flyout-backdrop" hidden aria-hidden="true"></div>
@@ -213,6 +241,12 @@
                 <button type="button" class="btn btn-compact btn-block" id="btn-print-left-without-hl" disabled title="Print PDF without highlights and note pins (PDF documents only)">
                   Without highlights
                 </button>
+              </div>
+              <div class="pane-flyout-group" role="group" aria-label="Left: AI shortcuts">
+                <span class="pane-flyout-label">AI</span>
+                <button type="button" class="btn btn-compact btn-block" id="btn-summarize-left" disabled>Summarize document</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-review-left" disabled>Review document</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-review-offline-left" disabled>Review offline (no web)</button>
               </div>
               <div class="pane-flyout-group pane-flyout-annotate" role="group" aria-label="Left: selection and notes">
                 <button type="button" class="btn btn-compact" id="btn-copy-left" disabled>Copy</button>
@@ -281,6 +315,16 @@
               </div>
               <button
                 type="button"
+                class="icon-btn pane-ai-fab"
+                id="pane-ai-right"
+                aria-label="Toggle AI assistant (right)"
+                title="AI Assistant"
+                aria-pressed="false"
+              >
+                AI
+              </button>
+              <button
+                type="button"
                 class="icon-btn pane-tools-fab"
                 id="pane-tools-right"
                 aria-expanded="false"
@@ -290,6 +334,24 @@
               >
                 ⋯
               </button>
+            </div>
+          </div>
+          <div class="ai-chat-panel" id="ai-chat-panel-right" hidden>
+            <div class="ai-chat-header">
+              <button type="button" class="ai-model-badge ai-model-switch-btn" id="ai-model-badge-right" title="Switch model" aria-haspopup="listbox"></button>
+              <span class="ai-doc-badge" id="ai-doc-badge-right">No document</span>
+              <div class="ai-chat-header-actions">
+                <button type="button" class="btn btn-compact ai-clear-btn" id="ai-clear-btn-right" aria-label="Clear chat">Clear</button>
+                <button type="button" class="icon-btn ai-chat-popout" id="ai-chat-popout-right" aria-label="Pop out AI chat" title="Pop out chat" aria-pressed="false">⧉</button>
+                <button type="button" class="icon-btn ai-chat-close" id="ai-chat-close-right" aria-label="Close AI panel">✕</button>
+              </div>
+            </div>
+            <div class="ai-model-picker" id="ai-model-picker-right" hidden role="listbox" aria-label="Select model"></div>
+            <div class="ai-chat-messages" id="ai-chat-messages-right">
+              <div class="ai-chat-status" id="ai-chat-status-right">Connecting to AI…</div>
+            </div>
+            <div class="ai-chat-input-row" id="ai-chat-input-row-right" hidden>
+              <!-- Story 2.3 fills this in -->
             </div>
           </div>
           <div id="pane-flyout-backdrop-right" class="pane-flyout-backdrop" hidden aria-hidden="true"></div>
@@ -345,6 +407,12 @@
                 <button type="button" class="btn btn-compact btn-block" id="btn-print-right-without-hl" disabled title="Print PDF without highlights and note pins (PDF documents only)">
                   Without highlights
                 </button>
+              </div>
+              <div class="pane-flyout-group" role="group" aria-label="Right: AI shortcuts">
+                <span class="pane-flyout-label">AI</span>
+                <button type="button" class="btn btn-compact btn-block" id="btn-summarize-right" disabled>Summarize document</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-review-right" disabled>Review document</button>
+                <button type="button" class="btn btn-compact btn-block" id="btn-review-offline-right" disabled>Review offline (no web)</button>
               </div>
               <div class="pane-flyout-group pane-flyout-annotate" role="group" aria-label="Right: selection and notes">
                 <button type="button" class="btn btn-compact" id="btn-copy-right" disabled>Copy</button>
@@ -609,6 +677,9 @@
       </button>
       <button type="button" class="btn btn-compact" id="selection-float-note" title="Add note at this text">
         Note
+      </button>
+      <button type="button" class="btn btn-compact" id="selection-float-ask-ai" title="Ask AI about this text">
+        Ask AI
       </button>
     </div>
 

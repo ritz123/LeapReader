@@ -21,7 +21,7 @@ export interface PaneElements {
   docView: HTMLElement;
 }
 
-export type DocType = "pdf" | "docx" | "doc" | "txt";
+export type DocType = "pdf" | "docx" | "doc" | "txt" | "md";
 
 export interface PanePdfState {
   doc: PDFDocumentProxy | null;
@@ -30,6 +30,8 @@ export interface PanePdfState {
   annotationDocId: string;
   /** Non-null when the pane holds a word/text document rendered as HTML. */
   docHtml: string | null;
+  /** Non-null for markdown files — raw source text (used for AI context and source-view toggle). */
+  docRaw: string | null;
   docType: DocType;
 }
 

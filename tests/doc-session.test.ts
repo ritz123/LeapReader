@@ -31,11 +31,16 @@ describe("docTypeFromName", () => {
     expect(docTypeFromName("Makefile")).toBe("txt");
   });
 
-  it("returns 'txt' for unknown extensions (.log, .md, .csv, …)", () => {
+  it("returns 'txt' for unknown extensions (.log, .csv, …)", () => {
     expect(docTypeFromName("server.log")).toBe("txt");
-    expect(docTypeFromName("readme.md")).toBe("txt");
     expect(docTypeFromName("data.csv")).toBe("txt");
     expect(docTypeFromName("code.ts")).toBe("txt");
+  });
+
+  // ── Markdown ──────────────────────────────────────────────────────────────
+  it("returns 'md' for .md files", () => {
+    expect(docTypeFromName("readme.md")).toBe("md");
+    expect(docTypeFromName("README.MD")).toBe("md");
   });
 
   it("handles filenames with multiple dots correctly", () => {

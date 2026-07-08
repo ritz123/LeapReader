@@ -82,6 +82,7 @@ import { updateSelectionFloatBar } from "./selection-float-bar";
 import { getHighlightColorPopover, session } from "./session";
 import type { PaneSide } from "./types";
 import { adjustPaneZoom, setPaneBaseFit, syncZoomUi } from "./zoom-pane";
+import { initAiPanel } from "./ai-panel";
 import { applySplitRatioToDom, initSplitDivider } from "./split-ratio";
 
 function bufferFromDesktopPayload(data: ArrayBuffer | Uint8Array): ArrayBuffer {
@@ -150,6 +151,7 @@ export function bootstrapReader(): void {
   // in the state-mutation modules).
   initChromeListeners();
   initZoomListeners();
+  initAiPanel();
 
   registerPdfRender(renderPaneImpl, renderBothPanesImpl);
   setOpenNoteForEditHandler((id) => {

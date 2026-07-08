@@ -3,6 +3,7 @@ import { emptyPanePdfState } from "./pane-model";
 import { emitBothPanesDocChanged, emitPaneDocChanged } from "./pane-events";
 import { releasePdfDoc } from "./pdf-doc-pool";
 import { teardownContinuousUi } from "./pdf-continuous";
+import { parseMarkdown, mountMdDocView } from "./md-render-pane";
 import { session } from "./session";
 import type { DocType, PaneSide } from "./types";
 
@@ -12,6 +13,7 @@ export function docTypeFromName(name: string): DocType | null {
   if (ext === "pdf") return null;
   if (ext === "docx") return "docx";
   if (ext === "doc") return "doc";
+  if (ext === "md") return "md";
   // .txt, no extension, or any other unknown extension → treat as plain text
   return "txt";
 }
@@ -33,6 +35,10 @@ async function toHtml(buf: ArrayBuffer, type: DocType): Promise<string> {
       })
       .join("");
     return `<pre class="doc-view__text">${lines}</pre>`;
+  }
+  if (type === "md") {
+    const text = new TextDecoder().decode(buf);
+    return parseMarkdown(text);
   }
   // docx / doc: use mammoth (lazy-loaded to keep the initial bundle small)
   const mammoth = (await import("mammoth")).default;
@@ -77,6 +83,9 @@ export async function loadDocBuffer(
   }
   teardownContinuousUi(side);
 
+  // For markdown, decode the raw text before converting to HTML so we can
+  // store it separately (AI context, source-view toggle).
+  const rawMd = type === "md" ? new TextDecoder().decode(buf) : null;
   const html = await toHtml(buf, type);
 
   session.paneState[side] = {
@@ -85,6 +94,7 @@ export async function loadDocBuffer(
     storageId,
     annotationDocId: storageId ?? "",
     docHtml: html,
+    docRaw: rawMd,
     docType: type,
   };
 
@@ -92,7 +102,12 @@ export async function loadDocBuffer(
   pe.canvasScroll.hidden = true;
   pe.docView.hidden = false;
   pe.docView.dataset.docType = type;
-  pe.docView.innerHTML = html;
+
+  if (type === "md" && rawMd !== null) {
+    mountMdDocView(side, rawMd, html, pe.docView);
+  } else {
+    pe.docView.innerHTML = html;
+  }
 
   // Single emit replaces: updatePaneChrome + updateHeaderSummary + syncZoomUi
   emitPaneDocChanged(side);

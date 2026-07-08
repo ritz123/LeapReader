@@ -34,6 +34,7 @@
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "mammoth": "^1.12.0",
+    "marked": "^18.0.5",
     "pdfjs-dist": "^4.10.38"
   },
   "devDependencies": {
@@ -67,6 +68,22 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/.venv/**"
+        ]
+      },
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "fileAssociations": [
@@ -83,6 +100,13 @@
         "description": "Plain text document",
         "mimeType": "text/plain",
         "role": "Viewer"
+      },
+      {
+        "ext": "md",
+        "name": "Markdown document",
+        "description": "Markdown text document",
+        "mimeType": "text/markdown",
+        "role": "Viewer"
       }
     ],
     "linux": {
@@ -95,8 +119,8 @@
       "maintainer": "Leap reader <noreply@localhost>",
       "icon": "build/icons/icon.png",
       "desktop": {
-        "MimeType": "application/pdf;text/plain;",
-        "Keywords": "pdf;txt;reader;document;"
+        "MimeType": "application/pdf;text/plain;text/markdown;",
+        "Keywords": "pdf;txt;md;markdown;reader;document;"
       }
     },
     "deb": {

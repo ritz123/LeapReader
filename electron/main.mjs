@@ -4,6 +4,7 @@
  * Libraries, notes, and cached PDFs persist under userData/leap-reader-data/ (see IPC leap-reader-fs).
  */
 import { app, BrowserWindow, ipcMain, Menu, shell, globalShortcut } from "electron";
+import { startBackend, stopBackend } from "./ai-bridge.mjs";
 import http from "node:http";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
@@ -344,6 +345,9 @@ if (!gotLock) {
 
     createWindow(LEAP_READER_PORT);
 
+    // Start AI backend sidecar (non-blocking; emits backend:ready/down/failed via IPC)
+    startBackend().catch((e) => console.error("AI backend start error:", e));
+
     // Open DevTools with Ctrl+Shift+I (or Cmd+Option+I on macOS) / F12
     globalShortcut.register("CommandOrControl+Shift+I", () => {
       mainWindow?.webContents.toggleDevTools();
@@ -373,6 +377,7 @@ if (!gotLock) {
 
   app.on("before-quit", () => {
     globalShortcut.unregisterAll();
+    stopBackend().catch(() => {});
     server?.close();
     server = null;
   });
